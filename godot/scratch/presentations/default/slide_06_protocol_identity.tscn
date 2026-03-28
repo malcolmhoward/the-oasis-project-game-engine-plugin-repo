@@ -1,0 +1,87 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_06_protocol_identity.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 80
+offset_top = 50
+offset_right = 1840
+offset_bottom = 130
+theme_override_font_sizes/font_size = 56
+horizontal_alignment = 1
+text = "Same Protocol. Different Bodies."
+
+[node name="LeftHeader" type="Label" parent="."]
+layout_mode = 0
+offset_left = 100
+offset_top = 170
+offset_right = 900
+offset_bottom = 220
+theme_override_font_sizes/font_size = 32
+text = "M.I.R.A.G.E. (physical helmet)"
+
+[node name="LeftPanel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 100
+offset_top = 240
+offset_right = 900
+offset_bottom = 540
+
+[node name="LeftContent" type="RichTextLabel" parent="LeftPanel"]
+layout_mode = 2
+bbcode_enabled = true
+text = ""
+scroll_active = false
+
+[node name="RightHeader" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1020
+offset_top = 170
+offset_right = 1820
+offset_bottom = 220
+theme_override_font_sizes/font_size = 32
+text = "E3 Avatar (game character)"
+
+[node name="RightPanel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 1020
+offset_top = 240
+offset_right = 1820
+offset_bottom = 540
+
+[node name="RightContent" type="RichTextLabel" parent="RightPanel"]
+layout_mode = 2
+bbcode_enabled = true
+text = ""
+scroll_active = false
+
+[node name="MatchHighlight" type="Label" parent="."]
+layout_mode = 0
+offset_left = 100
+offset_top = 620
+offset_right = 1820
+offset_bottom = 680
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.176, 0.831, 0.749, 1)
+horizontal_alignment = 1
+text = "Identical JSON schema — only the \"device\" field differs"
+
+[node name="Tagline" type="Label" parent="."]
+layout_mode = 0
+offset_left = 100
+offset_top = 740
+offset_right = 1820
+offset_bottom = 860
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1
+autowrap_mode = 2
+text = "D.A.W.N. doesn't know which is real.
+The protocol is identical."

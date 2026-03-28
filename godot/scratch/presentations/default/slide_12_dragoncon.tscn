@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_12_dragoncon.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 1
+offset_left = 80
+offset_top = 80
+offset_right = 1800
+offset_bottom = 130
+text = "Looking Ahead"
+
+[node name="Equation" type="Label" parent="."]
+layout_mode = 1
+offset_left = 120
+offset_top = 200
+offset_right = 1800
+offset_bottom = 280
+text = "Godot (open-source game engine) + Nakama (multiplayer server) + OCP embodiment
+= audience participation at scale"
+autowrap_mode = 3
+
+[node name="Concept" type="Label" parent="."]
+layout_mode = 1
+offset_left = 120
+offset_top = 320
+offset_right = 1800
+offset_bottom = 400
+text = "Concept: audience members scan a QR code, connect via Nakama,
+and control virtual O.A.S.I.S. peers from their phones at DragonCon"
+autowrap_mode = 3
+
+[node name="Physical" type="Label" parent="."]
+layout_mode = 1
+offset_left = 120
+offset_top = 440
+offset_right = 1800
+offset_bottom = 480
+text = "Physical peers on the same network too."
+
+[node name="Footer" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 560
+offset_right = 1700
+offset_bottom = 640
+text = "Not a proposal today — a concept worth revisiting
+once the Godot integration is solid."
+horizontal_alignment = 1
+autowrap_mode = 3

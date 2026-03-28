@@ -1,0 +1,68 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_09_godot_scene.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 1
+offset_left = 80
+offset_top = 80
+offset_right = 1800
+offset_bottom = 130
+text = "The Godot Scene Serves Two Purposes"
+
+[node name="Item1Number" type="Label" parent="."]
+layout_mode = 1
+offset_left = 120
+offset_top = 200
+offset_right = 1800
+offset_bottom = 240
+text = "1. A visualization of OCP traffic"
+
+[node name="Item1Desc" type="Label" parent="."]
+layout_mode = 1
+offset_left = 160
+offset_top = 250
+offset_right = 1800
+offset_bottom = 290
+text = "(what you just saw — monitoring mode)"
+
+[node name="Item2Number" type="Label" parent="."]
+layout_mode = 1
+offset_left = 120
+offset_top = 350
+offset_right = 1800
+offset_bottom = 390
+text = "2. A host for E3 digital peers"
+
+[node name="Item2Desc" type="Label" parent="."]
+layout_mode = 1
+offset_left = 160
+offset_top = 400
+offset_right = 1800
+offset_bottom = 440
+text = "(game characters that ARE OCP peers)"
+
+[node name="Connecting" type="Label" parent="."]
+layout_mode = 1
+offset_left = 300
+offset_top = 520
+offset_right = 1600
+offset_bottom = 560
+text = "Same protocol. Same MQTT bus."
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="."]
+layout_mode = 1
+offset_left = 300
+offset_top = 580
+offset_right = 1600
+offset_bottom = 620
+text = "One scene. Both purposes."
+horizontal_alignment = 1

@@ -1,0 +1,72 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_03_hardware_challenge.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = 1840.0
+offset_bottom = 140.0
+text = "The Problem"
+horizontal_alignment = 1
+
+[node name="ProblemLine1" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 240.0
+offset_right = 1800.0
+offset_bottom = 280.0
+text = "Testing O.A.S.I.S. software requires O.A.S.I.S. hardware."
+horizontal_alignment = 1
+
+[node name="ProblemLine2" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 300.0
+offset_right = 1800.0
+offset_bottom = 340.0
+text = "Not everyone has a Jetson, a Raspberry Pi, or an Iron Man helmet."
+horizontal_alignment = 1
+
+[node name="SolutionHeader" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 450.0
+offset_right = 1800.0
+offset_bottom = 490.0
+text = "The simulation framework solves this:"
+horizontal_alignment = 1
+
+[node name="SolutionDetail" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 520.0
+offset_right = 1800.0
+offset_bottom = 570.0
+text = "Mock any hardware  →  Test any software  →  No physical devices needed"
+horizontal_alignment = 1
+
+[node name="AccessibilityLine" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 160.0
+offset_top = 660.0
+offset_right = 1760.0
+offset_bottom = 740.0
+text = "2 GB RAM  |  No GPU  |  No API keys  |  Any OS
+pip install or Docker — full O.A.S.I.S. stack on a Chromebook"
+horizontal_alignment = 1
+autowrap_mode = 2

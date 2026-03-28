@@ -1,0 +1,62 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_04_architecture.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 80.0
+offset_top = 60.0
+offset_right = 1840.0
+offset_bottom = 120.0
+text = "Three-Layer Architecture"
+horizontal_alignment = 1
+
+[node name="DevicePanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 640.0
+offset_right = 1800.0
+offset_bottom = 780.0
+
+[node name="DeviceLabel" type="Label" parent="DevicePanel"]
+layout_mode = 2
+text = "Device Layer  —  Mock hardware, sensors, actuators"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NetworkPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 440.0
+offset_right = 1800.0
+offset_bottom = 580.0
+
+[node name="NetworkLabel" type="Label" parent="NetworkPanel"]
+layout_mode = 2
+text = "Network Layer  —  OCP / MQTT, peer discovery"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlatformPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 120.0
+offset_top = 240.0
+offset_right = 1800.0
+offset_bottom = 380.0
+
+[node name="PlatformLabel" type="Label" parent="PlatformPanel"]
+layout_mode = 2
+text = "Platform Layer  —  Godot, monitoring, orchestration"
+horizontal_alignment = 1
+vertical_alignment = 1

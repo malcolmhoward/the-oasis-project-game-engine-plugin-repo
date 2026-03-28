@@ -1,0 +1,95 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_11_ocp_location.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 80
+offset_top = 50
+offset_right = 1840
+offset_bottom = 130
+text = "Discussion: Where Should OCP Live?"
+
+[node name="Context" type="Label" parent="."]
+layout_mode = 0
+offset_left = 120
+offset_top = 160
+offset_right = 1800
+offset_bottom = 210
+text = "OCP is currently defined in D.A.W.N., but implemented in 5 locations:"
+
+[node name="LocationList" type="Label" parent="."]
+layout_mode = 0
+offset_left = 160
+offset_top = 230
+offset_right = 1800
+offset_bottom = 480
+text = "1.  D.A.W.N. — protocol spec origin, Python implementation
+2.  M.I.R.A.G.E. — command_processing.c, C implementation
+3.  E.C.H.O. — ocp.py, OCPPeer, Embodiment enum (Python)
+4.  Game Engine Plugin — ocp_message.gd, ocp_peer.gd (GDScript)
+5.  S.C.O.P.E. — ADR-0003, ADR-0007, ecosystem coordination"
+
+[node name="OptionA" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 100
+offset_top = 520
+offset_right = 620
+offset_bottom = 610
+
+[node name="LabelA" type="Label" parent="OptionA"]
+layout_mode = 2
+text = "A. Stay in D.A.W.N.
+(simplest)"
+horizontal_alignment = 1
+
+[node name="OptionB" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 660
+offset_top = 520
+offset_right = 1180
+offset_bottom = 610
+
+[node name="LabelB" type="Label" parent="OptionB"]
+layout_mode = 2
+text = "B. Standalone repo
+(cleanest)"
+horizontal_alignment = 1
+
+[node name="OptionC" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 1220
+offset_top = 520
+offset_right = 1820
+offset_bottom = 610
+
+[node name="LabelC" type="Label" parent="OptionC"]
+layout_mode = 2
+text = "C. Extract at threshold
+(deferred)"
+horizontal_alignment = 1
+
+[node name="Footer" type="Label" parent="."]
+layout_mode = 0
+offset_left = 200
+offset_top = 660
+offset_right = 1700
+offset_bottom = 700
+text = "Not requesting a decision today."
+horizontal_alignment = 1
+
+[node name="FooterSub" type="Label" parent="."]
+layout_mode = 0
+offset_left = 200
+offset_top = 710
+offset_right = 1700
+offset_bottom = 750
+text = "Raising it for your awareness."
+horizontal_alignment = 1

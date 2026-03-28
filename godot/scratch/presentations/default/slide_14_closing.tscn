@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_14_closing.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 80
+offset_top = 80
+offset_right = 1800
+offset_bottom = 170
+text = "Thank You"
+
+[node name="Body" type="Label" parent="."]
+layout_mode = 0
+offset_left = 300
+offset_top = 260
+offset_right = 1600
+offset_bottom = 380
+text = "The demo is still running — tell me what you'd like to see.
+I can type commands, navigate panels, or show the MQTT traffic live."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Repos" type="Label" parent="."]
+layout_mode = 0
+offset_left = 300
+offset_top = 480
+offset_right = 1600
+offset_bottom = 580
+text = "github.com/malcolmhoward/the-oasis-project-simulation-repo
+github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo
+github.com/malcolmhoward/the-oasis-project-meta-repo"
+horizontal_alignment = 1
+modulate = Color(1, 1, 1, 0.5)
