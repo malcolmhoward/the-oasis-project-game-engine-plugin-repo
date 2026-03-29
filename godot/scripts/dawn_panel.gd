@@ -86,14 +86,9 @@ const MAX_MESSAGES := 100
 
 
 func _add_message(sender: String, text: String, color: Color):
-	var label = RichTextLabel.new()
-	label.bbcode_enabled = true
-	label.fit_content = true
-	label.scroll_active = false
-	label.text = "[color=#%s]%s:[/color] %s" % [
-		color.to_html(false), sender, text
-	]
-	conversation.add_child(label)
+	var role = MessageBubble.Role.USER if sender == "You" else MessageBubble.Role.ASSISTANT
+	var bubble = MessageBubble.create(role, sender, text)
+	conversation.add_child(bubble)
 	# Remove oldest messages to prevent memory growth
 	while conversation.get_child_count() > MAX_MESSAGES:
 		var oldest = conversation.get_child(0)
