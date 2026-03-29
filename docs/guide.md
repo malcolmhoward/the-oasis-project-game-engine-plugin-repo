@@ -1,10 +1,10 @@
-# O.A.S.I.S. Game Engine Plugin — Godot 4.6
+# O.A.S.I.S. Game Engine Plugin — Godot 4.5
 
 > **Naming note**: This repository uses a temporary name pending the project lead's selection.
 
 ## Overview
 
-The Godot OCP plugin enables any Godot 4.6 project to participate on the O.A.S.I.S. MQTT (Message Queuing Telemetry Transport) network. Game scenes can subscribe to real-time sensor data, publish OCP (OASIS Communications Protocol) status messages, and host virtual avatars that are first-class peers on the same network as physical O.A.S.I.S. hardware.
+The Godot OCP plugin enables any Godot 4.5 project to participate on the O.A.S.I.S. MQTT (Message Queuing Telemetry Transport) network. Game scenes can subscribe to real-time sensor data, publish OCP (OASIS Communications Protocol) status messages, and host virtual avatars that are first-class peers on the same network as physical O.A.S.I.S. hardware.
 
 The plugin registers game engine entities as E3 (digital/virtual) peers per the OCP embodiment spectrum (ADR-0003 Amendment 5). A Godot character publishing to `oasis/<peer_id>/status` is indistinguishable from M.I.R.A.G.E. on a Jetson to any MQTT subscriber.
 
@@ -12,7 +12,7 @@ The plugin registers game engine entities as E3 (digital/virtual) peers per the 
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| Godot Engine | 4.6+ | Game engine runtime |
+| Godot Engine | 4.5+ | Game engine runtime |
 | Mosquitto | 2.x | MQTT broker (WebSocket listener on port 9001) |
 
 No external GDScript libraries required — the MQTT client (`mqtt_bridge.gd`) implements MQTT v3.1.1 packet encoding over WebSocket natively.
@@ -37,7 +37,7 @@ Optional:
 ```bash
 git clone https://github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo.git
 cd the-oasis-project-game-engine-plugin-repo/godot
-# Open in Godot 4.6 editor
+# Open in Godot 4.5 editor
 ```
 
 ## Configuration

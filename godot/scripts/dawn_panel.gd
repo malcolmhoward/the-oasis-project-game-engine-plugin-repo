@@ -1,0 +1,118 @@
+## Reusable D.A.W.N. conversation panel.
+##
+## Can be instanced as a standalone demo or embedded in any scene.
+## Publishes user messages to the D.A.W.N. input topic and displays
+## responses from the D.A.W.N. output topic.
+##
+## When running with E.C.H.O.'s mock LLM, keyword-matched responses
+## appear automatically. When running with real D.A.W.N., the full
+## intent-processing pipeline handles the conversation.
+extends Control
+
+signal user_message_sent(text: String)
+
+@onready var conversation = $VBoxContainer/ScrollContainer/VBoxContainer
+@onready var input_field = $VBoxContainer/HBoxContainer/LineEdit
+@onready var send_button = $VBoxContainer/HBoxContainer/Button
+@onready var status_label = $VBoxContainer/StatusBar
+
+var _mqtt = null
+var _dawn_online = false
+
+
+func _ready():
+	send_button.pressed.connect(_on_send)
+	input_field.text_submitted.connect(_on_send_text)
+
+	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
+	if oasis_mqtt:
+		_mqtt = oasis_mqtt.get_mqtt()
+		oasis_mqtt.global_message.connect(_on_mqtt_message)
+		oasis_mqtt.peer_discovered.connect(_on_peer_discovered)
+
+	_update_status()
+
+
+func _on_send():
+	_on_send_text(input_field.text)
+
+
+func _on_send_text(text: String):
+	if text.strip_edges().is_empty():
+		return
+	_add_message("You", text, Color.WHITE)
+	# Publish to D.A.W.N.'s input topic
+	if _mqtt:
+		_mqtt.publish("dawn", JSON.stringify({
+			"device": "godot-dawn-panel",
+			"action": "process_intent",
+			"value": text,
+			"timestamp": int(Time.get_unix_time_from_system()),
+		}))
+	user_message_sent.emit(text)
+	input_field.clear()
+
+
+func _on_mqtt_message(topic: String, payload: String):
+	# Track D.A.W.N. online status
+	if topic == "dawn/status" or topic.ends_with("/dawn/status"):
+		var msg = JSON.parse_string(payload)
+		if msg is Dictionary and msg.get("status") == "online":
+			_dawn_online = true
+			_update_status()
+
+	# Display D.A.W.N. responses
+	if topic == "dawn" or topic == "oasis/dawn/output":
+		var msg = JSON.parse_string(payload)
+		if msg is Dictionary:
+			var text = ""
+			if msg.has("text"):
+				text = str(msg["text"])
+			elif msg.has("response"):
+				text = str(msg["response"])
+			elif msg.has("value") and msg.get("action") == "speak":
+				text = str(msg["value"])
+			if not text.is_empty():
+				_add_message("D.A.W.N.", text, Color("#00BFFF"))
+
+
+func _on_peer_discovered(peer_id: String, data: Dictionary):
+	if "dawn" in peer_id.to_lower():
+		_dawn_online = true
+		_update_status()
+
+
+const MAX_MESSAGES := 100
+
+
+func _add_message(sender: String, text: String, color: Color):
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.scroll_active = false
+	label.text = "[color=#%s]%s:[/color] %s" % [
+		color.to_html(false), sender, text
+	]
+	conversation.add_child(label)
+	# Remove oldest messages to prevent memory growth
+	while conversation.get_child_count() > MAX_MESSAGES:
+		var oldest = conversation.get_child(0)
+		conversation.remove_child(oldest)
+		oldest.queue_free()
+	# Auto-scroll to bottom
+	await get_tree().process_frame
+	var scroll = $VBoxContainer/ScrollContainer
+	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+
+
+func _update_status():
+	if status_label:
+		if _dawn_online:
+			status_label.text = "D.A.W.N.: Online"
+			status_label.add_theme_color_override("font_color", Color("#00CC66"))
+		elif _mqtt:
+			status_label.text = "D.A.W.N.: Waiting..."
+			status_label.add_theme_color_override("font_color", Color("#CCAA00"))
+		else:
+			status_label.text = "MQTT: Not connected"
+			status_label.add_theme_color_override("font_color", Color("#CC3333"))
