@@ -1,0 +1,27 @@
+{
+  "title": "Understanding Gravity",
+  "theme": "res://resources/themes/arc_reactor_dark.tres",
+  "theme_override": null,
+  "slides": [
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_01_title.tscn", "cue": "Title"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_02_what_is_gravity.tscn", "cue": "Newton's apple, force equation"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_03_force_vectors.tscn", "cue": "Diagram: two masses, force arrows"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_04_acceleration.tscn", "cue": "Chart: acceleration vs distance"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_05_orbits.tscn", "cue": "Diagram: circular to elliptical"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_06_simulation.tscn", "cue": "LIVE DEMO — orbits morphed"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_07_einstein.tscn", "cue": "Spacetime curvature, not a force"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_08_waves.tscn", "cue": "LIGO discovery, ripple animation"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_09_black_holes.tscn", "cue": "Event horizon diagram"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_10_practical.tscn", "cue": "GPS, tides, space travel"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_11_questions.tscn", "cue": "Quantum gravity, dark energy"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_12_summary.tscn", "cue": "Newton to Einstein to unknown"},
+    {"scene": "res://scenes/demos/demo_presentation/examples/slides/slide_13_credits.tscn", "cue": "Sources and further reading"}
+  ],
+  "transitions": {
+    "slide_05_to_slide_06": {
+      "type": "morph_to_demo",
+      "duration": 0.8,
+      "demo_scene": "res://scenes/demos/demo_presentation/examples/gravity_sim.tscn"
+    }
+  }
+}
