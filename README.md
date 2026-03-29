@@ -8,7 +8,7 @@ OCP (O.A.S.I.S. Communication Protocol) integration plugins for real-time game a
 
 | Engine | Status | Path |
 |---|---|---|
-| **Godot 4.6** | Scaffold complete (23 files, 1,827 lines) | [`godot/`](godot/) |
+| **Godot 4.5** | Scaffold complete (23 files, 1,827 lines) | [`godot/`](godot/) |
 | Unreal | Planned | `unreal/` |
 | Unity | Planned | `unity/` |
 
