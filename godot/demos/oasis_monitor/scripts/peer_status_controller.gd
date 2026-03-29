@@ -43,6 +43,7 @@ func _update_peer_row(peer_id: String, status: String, embodiment: String) -> vo
 	# Update status indicator
 	var indicator: Label = row.get_node("StatusIndicator")
 <<<<<<< HEAD
+<<<<<<< HEAD
 	indicator.text = "��" if status == "online" else "○"
 	indicator.add_theme_color_override("font_color",
 		ArcReactorDark.STATUS_SUCCESS if status == "online" else ArcReactorDark.STATUS_ERROR
@@ -57,10 +58,14 @@ func _update_peer_row(peer_id: String, status: String, embodiment: String) -> vo
 		)
 =======
 	indicator.text = "●" if status == "online" else "○"
+=======
+	indicator.text = "��" if status == "online" else "○"
+>>>>>>> a3a8b53 (feat(ui): Apply Arc Reactor Dark design system)
 	indicator.add_theme_color_override("font_color",
-		Color("#00CC66") if status == "online" else Color("#CC3333")
+		ArcReactorDark.STATUS_SUCCESS if status == "online" else ArcReactorDark.STATUS_ERROR
 	)
 	# Update embodiment badge
+<<<<<<< HEAD
 	var badge: Label = row.get_node("EmbodimentBadge")
 	var type_short = _embodiment_short(embodiment)
 	badge.text = type_short
@@ -68,6 +73,15 @@ func _update_peer_row(peer_id: String, status: String, embodiment: String) -> vo
 		EMBODIMENT_COLORS.get(embodiment, Color("#888888"))
 	)
 >>>>>>> 9d2ddee (feat(godot): Add OCP plugin scaffold, validated in Godot 4.5)
+=======
+	var badge = row.get_node("EmbodimentBadge")
+	if badge is Label:
+		var type_short = _embodiment_short(embodiment)
+		badge.text = type_short
+		badge.add_theme_color_override("font_color",
+			EMBODIMENT_COLORS.get(embodiment, ArcReactorDark.TEXT_TERTIARY)
+		)
+>>>>>>> a3a8b53 (feat(ui): Apply Arc Reactor Dark design system)
 
 
 func _create_peer_row(peer_id: String) -> void:
