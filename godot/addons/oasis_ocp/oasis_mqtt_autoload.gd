@@ -18,6 +18,13 @@ signal global_message(topic: String, payload: String)
 
 
 func _ready() -> void:
+	# Apply Arc Reactor Dark theme globally
+	var theme = ThemeBuilder.build_theme()
+	get_tree().root.theme = theme
+
+	# Set window background color
+	RenderingServer.set_default_clear_color(ArcReactorDark.BG_DEEPEST)
+
 	# Allow command-line override: --mqtt-host=x --mqtt-port=y
 	for arg in OS.get_cmdline_args():
 		if arg.begins_with("--mqtt-host="):
