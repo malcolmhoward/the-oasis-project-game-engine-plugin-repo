@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://gravity_sim"]
+
+[ext_resource type="Script" path="res://scenes/demos/demo_presentation/examples/gravity_sim.gd" id="1"]
+
+[node name="GravitySim" type="Node2D"]
+script = ExtResource("1")
