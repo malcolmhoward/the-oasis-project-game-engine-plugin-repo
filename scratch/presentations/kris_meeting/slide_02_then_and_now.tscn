@@ -1,0 +1,117 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_02_then_and_now.gd" id="1"]
+
+[node name="Slide02" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200
+offset_top = 40
+offset_right = 200
+offset_bottom = 70
+text = "Where We Started → Where We Are"
+horizontal_alignment = 1
+
+[node name="Content" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 100
+offset_bottom = -40
+
+[node name="Left" type="VBoxContainer" parent="Content"]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 460
+offset_bottom = 400
+theme_override_constants/separation = 40
+
+[node name="Item1" type="Label" parent="Content/Left"]
+layout_mode = 2
+text = "Single hardware platform"
+
+[node name="Item2" type="Label" parent="Content/Left"]
+layout_mode = 2
+text = "One peer type (physical)"
+
+[node name="Item3" type="Label" parent="Content/Left"]
+layout_mode = 2
+text = "Hardware-dependent testing"
+
+[node name="Item4" type="Label" parent="Content/Left"]
+layout_mode = 2
+text = "OCP for device control"
+
+[node name="Right" type="VBoxContainer" parent="Content"]
+layout_mode = 1
+offset_left = 560
+offset_top = 40
+offset_right = 960
+offset_bottom = 400
+theme_override_constants/separation = 40
+
+[node name="Item1" type="Label" parent="Content/Right"]
+layout_mode = 2
+text = "Three-layer simulation framework"
+
+[node name="Item2" type="Label" parent="Content/Right"]
+layout_mode = 2
+text = "Five embodiment types (E1-E5)"
+
+[node name="Item3" type="Label" parent="Content/Right"]
+layout_mode = 2
+text = "Full software simulation"
+
+[node name="Item4" type="Label" parent="Content/Right"]
+layout_mode = 2
+text = "OCP as universal peer protocol"
+
+[node name="Lines" type="Control" parent="Content"]
+layout_mode = 1
+offset_left = 460
+offset_top = 40
+offset_right = 560
+offset_bottom = 400
+
+[node name="Line1" type="Label" parent="Content/Lines"]
+layout_mode = 0
+offset_top = 5
+offset_right = 100
+offset_bottom = 25
+text = "→"
+horizontal_alignment = 1
+
+[node name="Line2" type="Label" parent="Content/Lines"]
+layout_mode = 0
+offset_top = 45
+offset_right = 100
+offset_bottom = 65
+text = "→"
+horizontal_alignment = 1
+
+[node name="Line3" type="Label" parent="Content/Lines"]
+layout_mode = 0
+offset_top = 85
+offset_right = 100
+offset_bottom = 105
+text = "→"
+horizontal_alignment = 1
+
+[node name="Line4" type="Label" parent="Content/Lines"]
+layout_mode = 0
+offset_top = 125
+offset_right = 100
+offset_bottom = 145
+text = "→"
+horizontal_alignment = 1

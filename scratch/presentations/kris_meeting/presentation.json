@@ -1,0 +1,36 @@
+{
+  "title": "O.A.S.I.S. Update",
+  "theme": "res://resources/themes/arc_reactor_dark.tres",
+  "theme_override": null,
+  "slides": [
+    {"scene": "slide_01_title.tscn", "cue": "Title — let it breathe"},
+    {"scene": "slide_02_then_and_now.tscn", "cue": "Then vs now, four pairs"},
+    {"scene": "slide_03_hardware_challenge.tscn", "cue": "Hardware problem, software solution"},
+    {"scene": "slide_04_architecture.tscn", "cue": "Three layers, bottom up"},
+    {"scene": "slide_05_coverage.tscn", "cue": "Coverage checklist, three sections"},
+    {"scene": "slide_06_protocol_identity.tscn", "cue": "Same JSON, different device names"},
+    {"scene": "slide_07_live_demo.tscn", "cue": "LIVE DEMO — architecture morphed"},
+    {"scene": "slide_08_embodiment.tscn", "cue": "Five types, E3+E4 implemented"},
+    {"scene": "slide_09_godot_scene.tscn", "cue": "Monitor AND host, same scene"},
+    {"scene": "slide_10_new_repo.tscn", "cue": "New repo, temporary name"},
+    {"scene": "slide_11_ocp_location.tscn", "cue": "Discussion, not decision"},
+    {"scene": "slide_12_dragoncon.tscn", "cue": "DragonCon tease, not proposal"},
+    {"scene": "slide_13_requests.tscn", "cue": "Five requests, collaborative tone"},
+    {"scene": "slide_14_closing.tscn", "cue": "Thank you, demo still running"}
+  ],
+  "transitions": {
+    "slide_04_to_slide_07": {
+      "type": "morph_to_demo",
+      "duration": 0.8,
+      "demo_scene": "res://demos/e3_character/scenes/unified_demo.tscn"
+    }
+  },
+  "appendix": [
+    {"scene": "appendix_a_provider.tscn", "cue": "Provider pattern detail"},
+    {"scene": "appendix_b_dawn_pipeline.tscn", "cue": "DAWN flow with simulation"},
+    {"scene": "appendix_c_adr_history.tscn", "cue": "ADR-0003 amendments"},
+    {"scene": "appendix_d_schema.tscn", "cue": "Embodiment block JSON"},
+    {"scene": "appendix_e_dragoncon_modes.tscn", "cue": "Three control modes"},
+    {"scene": "appendix_f_standards.tscn", "cue": "OCP vs OpenXR vs ROS2 vs Matter"}
+  ]
+}

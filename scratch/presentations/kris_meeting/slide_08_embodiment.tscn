@@ -1,0 +1,107 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_08_embodiment.gd" id="1"]
+
+[node name="Slide08" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 600
+offset_bottom = 70
+text = "OCP Embodiment Spectrum (Proposed)"
+
+[node name="Spectrum" type="ColorRect" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 100
+offset_right = 940
+offset_bottom = 112
+color = Color(0.3, 0.3, 0.3, 0.5)
+
+[node name="Types" type="VBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 130
+offset_right = 940
+offset_bottom = 500
+theme_override_constants/separation = 20
+
+[node name="Type1" type="HBoxContainer" parent="Types"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Types/Type1"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+text = "E1  Physical"
+
+[node name="Desc" type="Label" parent="Types/Type1"]
+layout_mode = 2
+text = "Jetson, Raspberry Pi, Arduino"
+
+[node name="Type2" type="HBoxContainer" parent="Types"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Types/Type2"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+text = "E2  Remote-Physical"
+
+[node name="Desc" type="Label" parent="Types/Type2"]
+layout_mode = 2
+text = "Real hardware, remote operator"
+
+[node name="Type3" type="HBoxContainer" parent="Types"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Types/Type3"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+text = "E3  Digital/Virtual"
+
+[node name="Desc" type="Label" parent="Types/Type3"]
+layout_mode = 2
+text = "Game engine avatar, simulation peer"
+
+[node name="Type4" type="HBoxContainer" parent="Types"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Types/Type4"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+text = "E4  Software-Only"
+
+[node name="Desc" type="Label" parent="Types/Type4"]
+layout_mode = 2
+text = "Pure service/infrastructure"
+
+[node name="Type5" type="HBoxContainer" parent="Types"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Types/Type5"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+text = "E5  Hybrid"
+
+[node name="Desc" type="Label" parent="Types/Type5"]
+layout_mode = 2
+text = "Spans multiple types via Provider"
+
+[node name="Badges" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 520
+offset_right = 940
+offset_bottom = 550
+text = "E3 + E4: implemented    |    E1, E2, E5: proposed (pending your review)"

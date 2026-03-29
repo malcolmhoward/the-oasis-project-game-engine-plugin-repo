@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_14_closing.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 900
+offset_bottom = 70
+text = "Thank You"
+
+[node name="Message" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 200
+offset_right = 800
+offset_bottom = 320
+text = "The demo is still running — happy to show anything you'd like.
+Feel free to suggest commands for the DAWN panel."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Repos" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 380
+offset_right = 800
+offset_bottom = 480
+text = "github.com/malcolmhoward/the-oasis-project-simulation-repo
+github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo
+github.com/malcolmhoward/the-oasis-project-meta-repo"
+horizontal_alignment = 1

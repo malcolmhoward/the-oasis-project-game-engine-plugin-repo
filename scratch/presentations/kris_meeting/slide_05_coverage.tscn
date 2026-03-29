@@ -1,0 +1,102 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_05_coverage.gd" id="1"]
+
+[node name="Slide05" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 600
+offset_bottom = 70
+text = "Simulation Coverage"
+
+[node name="Device" type="VBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 100
+offset_right = 400
+offset_bottom = 320
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="Device"]
+layout_mode = 2
+text = "Device Layer:"
+
+[node name="I1" type="Label" parent="Device"]
+layout_mode = 2
+text = "  ✅ GPIO pins, I2C bus, SPI, camera"
+
+[node name="I2" type="Label" parent="Device"]
+layout_mode = 2
+text = "  ✅ Sensors (IMU, temperature, distance)"
+
+[node name="I3" type="Label" parent="Device"]
+layout_mode = 2
+text = "  ✅ Actuators (servos, LEDs, displays)"
+
+[node name="I4" type="Label" parent="Device"]
+layout_mode = 2
+text = "  ✅ Hot-swap: mock ↔ real at runtime"
+
+[node name="Network" type="VBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 420
+offset_top = 100
+offset_right = 720
+offset_bottom = 320
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="Network"]
+layout_mode = 2
+text = "Network Layer:"
+
+[node name="I1" type="Label" parent="Network"]
+layout_mode = 2
+text = "  ✅ MQTT broker (local Mosquitto)"
+
+[node name="I2" type="Label" parent="Network"]
+layout_mode = 2
+text = "  ✅ OCP message routing"
+
+[node name="I3" type="Label" parent="Network"]
+layout_mode = 2
+text = "  ✅ Peer discovery and heartbeat"
+
+[node name="I4" type="Label" parent="Network"]
+layout_mode = 2
+text = "  ✅ All three OCP topics"
+
+[node name="Platform" type="VBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 350
+offset_right = 400
+offset_bottom = 560
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="Platform"]
+layout_mode = 2
+text = "Platform Layer:"
+
+[node name="I1" type="Label" parent="Platform"]
+layout_mode = 2
+text = "  ✅ Godot visualization"
+
+[node name="I2" type="Label" parent="Platform"]
+layout_mode = 2
+text = "  ✅ E3 digital peers (game characters)"
+
+[node name="I3" type="Label" parent="Platform"]
+layout_mode = 2
+text = "  ✅ DAWN conversation interface"
+
+[node name="I4" type="Label" parent="Platform"]
+layout_mode = 2
+text = "  ✅ OCP traffic monitoring"

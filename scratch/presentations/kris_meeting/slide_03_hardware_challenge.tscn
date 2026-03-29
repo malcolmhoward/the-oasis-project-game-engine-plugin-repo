@@ -1,0 +1,79 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_03_hardware_challenge.gd" id="1"]
+
+[node name="Slide03" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 600
+offset_bottom = 70
+text = "The Problem"
+
+[node name="Description" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 90
+offset_right = 900
+offset_bottom = 140
+text = "Testing OASIS software requires OASIS hardware.
+Not everyone has a Jetson, a Raspberry Pi, or an Iron Man helmet."
+autowrap_mode = 3
+
+[node name="HardwareIcons" type="HBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 250
+offset_right = 800
+offset_bottom = 350
+theme_override_constants/separation = 60
+alignment = 1
+
+[node name="Jetson" type="Label" parent="HardwareIcons"]
+layout_mode = 2
+text = "🖥 Jetson"
+horizontal_alignment = 1
+
+[node name="RPi" type="Label" parent="HardwareIcons"]
+layout_mode = 2
+text = "🔧 RPi"
+horizontal_alignment = 1
+
+[node name="Helmet" type="Label" parent="HardwareIcons"]
+layout_mode = 2
+text = "⛑ Helmet"
+horizontal_alignment = 1
+
+[node name="RedOverlay" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 360
+offset_right = 800
+offset_bottom = 390
+text = "✗ Not everyone has access to this hardware"
+horizontal_alignment = 1
+
+[node name="SoftwareIcon" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 420
+offset_right = 800
+offset_bottom = 460
+text = "✓ The simulation framework replaces all of it in software"
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="."]
+layout_mode = 1
+offset_left = 100
+offset_top = 520
+offset_right = 900
+offset_bottom = 560
+text = "Mock any hardware → Test any software → No physical devices needed"
+horizontal_alignment = 1

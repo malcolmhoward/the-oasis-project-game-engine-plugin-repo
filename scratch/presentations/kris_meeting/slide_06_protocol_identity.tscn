@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_06_protocol_identity.gd" id="1"]
+
+[node name="Slide06" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 600
+offset_bottom = 70
+text = "Same Protocol. Different Bodies."
+
+[node name="LeftMessage" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 120
+offset_right = 480
+offset_bottom = 320
+
+[node name="Content" type="VBoxContainer" parent="LeftMessage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="LeftMessage/Content"]
+layout_mode = 2
+text = "MIRAGE (physical helmet):"
+
+[node name="Topic" type="Label" parent="LeftMessage/Content"]
+layout_mode = 2
+text = "publishes → oasis/mirage/status"
+
+[node name="Schema" type="Label" parent="LeftMessage/Content"]
+layout_mode = 2
+text = "{\"device\":\"mirage\",\"uptime\":120,\"battery\":85}"
+
+[node name="RightMessage" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 520
+offset_top = 120
+offset_right = 940
+offset_bottom = 320
+
+[node name="Content" type="VBoxContainer" parent="RightMessage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="RightMessage/Content"]
+layout_mode = 2
+text = "E3 Avatar (game character):"
+
+[node name="Topic" type="Label" parent="RightMessage/Content"]
+layout_mode = 2
+text = "publishes → oasis/e3-avatar/status"
+
+[node name="Schema" type="Label" parent="RightMessage/Content"]
+layout_mode = 2
+text = "{\"device\":\"e3-avatar\",\"uptime\":45,\"battery\":100}"
+
+[node name="Highlight" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 350
+offset_right = 800
+offset_bottom = 390
+text = "↑ Identical structure, different device names ↑"
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 450
+offset_right = 800
+offset_bottom = 490
+text = "DAWN doesn't know which is real. The protocol is identical."
+horizontal_alignment = 1

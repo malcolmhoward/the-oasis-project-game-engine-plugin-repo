@@ -1,0 +1,63 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_13_requests.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 900
+offset_bottom = 70
+text = "I'd Love Your Perspective"
+
+[node name="R1" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 110
+offset_right = 900
+offset_bottom = 160
+text = "1. Embodiment spectrum (E1-E5)
+   Does this taxonomy make sense for OASIS?"
+
+[node name="R2" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 180
+offset_right = 900
+offset_bottom = 230
+text = "2. Simulation repo naming
+   Ready for an official name when you are"
+
+[node name="R3" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 250
+offset_right = 900
+offset_bottom = 300
+text = "3. Game engine plugin repo naming
+   Same naming convention — happy to hear your instinct"
+
+[node name="R4" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 320
+offset_right = 900
+offset_bottom = 370
+text = "4. Game engine plugin repo approval
+   Would like to create this as a new component repository"
+
+[node name="R5" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 390
+offset_right = 900
+offset_bottom = 440
+text = "5. OCP location
+   Not urgent — just planting the seed as peers multiply"

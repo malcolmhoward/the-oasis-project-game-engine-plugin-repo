@@ -1,0 +1,69 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_10_new_repo.gd" id="1"]
+
+[node name="Slide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 900
+offset_bottom = 70
+text = "New Component: Game Engine Plugin"
+
+[node name="RepoInfo" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 100
+offset_right = 900
+offset_bottom = 200
+text = "Repository: the-oasis-project-game-engine-plugin-repo
+Branch: feat/plugin/4-scaffold
+License: GPL-3.0
+Engine: Godot 4.5"
+
+[node name="Tree1" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 220
+offset_right = 600
+offset_bottom = 250
+text = "godot/"
+
+[node name="Tree2" type="Label" parent="."]
+layout_mode = 1
+offset_left = 100
+offset_top = 260
+offset_right = 600
+offset_bottom = 290
+text = "├── addons/oasis_ocp/   ← The plugin (reusable)"
+
+[node name="Tree3" type="Label" parent="."]
+layout_mode = 1
+offset_left = 100
+offset_top = 300
+offset_right = 600
+offset_bottom = 330
+text = "├── scenes/             ← Demo scenes"
+
+[node name="Tree4" type="Label" parent="."]
+layout_mode = 1
+offset_left = 100
+offset_top = 340
+offset_right = 600
+offset_bottom = 370
+text = "├── resources/          ← Arc Reactor Dark theme"
+
+[node name="NameNote" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 420
+offset_right = 900
+offset_bottom = 460
+text = "Temporary name — ready for an official name when you are."

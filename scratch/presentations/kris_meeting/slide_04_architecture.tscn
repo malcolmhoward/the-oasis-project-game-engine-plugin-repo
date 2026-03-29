@@ -1,0 +1,100 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scratch/presentations/kris_meeting/slide_04_architecture.gd" id="1"]
+
+[node name="Slide04" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Heading" type="Label" parent="."]
+layout_mode = 1
+offset_left = 60
+offset_top = 40
+offset_right = 600
+offset_bottom = 70
+text = "Three-Layer Architecture"
+
+[node name="PlatformPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 150
+offset_right = 800
+offset_bottom = 270
+
+[node name="PlatformContent" type="VBoxContainer" parent="PlatformPanel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="PlatformPanel/PlatformContent"]
+layout_mode = 2
+text = "Platform Layer"
+
+[node name="Desc" type="Label" parent="PlatformPanel/PlatformContent"]
+layout_mode = 2
+text = "Godot, monitoring, orchestration"
+
+[node name="NetworkPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 290
+offset_right = 800
+offset_bottom = 410
+
+[node name="NetworkContent" type="VBoxContainer" parent="NetworkPanel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="NetworkPanel/NetworkContent"]
+layout_mode = 2
+text = "Network Layer"
+
+[node name="Desc" type="Label" parent="NetworkPanel/NetworkContent"]
+layout_mode = 2
+text = "OCP/MQTT, peer discovery"
+
+[node name="DevicePanel" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 200
+offset_top = 430
+offset_right = 800
+offset_bottom = 550
+
+[node name="DeviceContent" type="VBoxContainer" parent="DevicePanel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="DevicePanel/DeviceContent"]
+layout_mode = 2
+text = "Device Layer"
+
+[node name="Desc" type="Label" parent="DevicePanel/DeviceContent"]
+layout_mode = 2
+text = "Mock hardware, sensors, actuators"
+
+[node name="Labels" type="Control" parent="."]
+layout_mode = 1
+offset_left = 810
+offset_top = 150
+offset_right = 960
+offset_bottom = 550
+
+[node name="PlatformLabel" type="Label" parent="Labels"]
+layout_mode = 0
+offset_top = 40
+offset_right = 150
+offset_bottom = 60
+text = "← What runs on top"
+
+[node name="NetworkLabel" type="Label" parent="Labels"]
+layout_mode = 0
+offset_top = 180
+offset_right = 150
+offset_bottom = 200
+text = "← How things communicate"
+
+[node name="DeviceLabel" type="Label" parent="Labels"]
+layout_mode = 0
+offset_top = 320
+offset_right = 150
+offset_bottom = 340
+text = "← What pretends to be hardware"
