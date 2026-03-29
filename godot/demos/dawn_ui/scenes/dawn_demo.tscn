@@ -1,0 +1,50 @@
+[gd_scene load_steps=3 format=3 uid="uid://dawn_demo"]
+
+[ext_resource type="PackedScene" path="res://scenes/dawn_panel.tscn" id="1"]
+[ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_demo_controller.gd" id="2"]
+
+[node name="DawnDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 600
+
+[node name="DawnPanel" parent="HSplitContainer" instance=ExtResource("1")]
+layout_mode = 2
+
+[node name="StreamPanel" type="PanelContainer" parent="HSplitContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/StreamPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HSplitContainer/StreamPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="HSplitContainer/StreamPanel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "OCP Message Stream"
+
+[node name="MsgCount" type="Label" parent="HSplitContainer/StreamPanel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "0 messages"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="HSplitContainer/StreamPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
