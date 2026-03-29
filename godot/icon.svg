@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#1A1A2E"/>
+  <circle cx="64" cy="50" r="24" fill="none" stroke="#008888" stroke-width="3"/>
+  <circle cx="64" cy="50" r="8" fill="#008888"/>
+  <line x1="64" y1="74" x2="64" y2="100" stroke="#008888" stroke-width="3"/>
+  <line x1="44" y1="86" x2="84" y2="86" stroke="#008888" stroke-width="3"/>
+  <text x="64" y="120" text-anchor="middle" fill="#E0E0E0" font-family="sans-serif" font-size="10">OCP</text>
+</svg>
