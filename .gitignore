@@ -29,6 +29,7 @@ mosquitto.log
 
 # Build artifacts
 export/
+scratch/
 
 # Godot editor cache: local to each machine, never committed
 godot/.godot/
