@@ -103,11 +103,11 @@ func _add_message(sender: String, text: String, color: Color):
 func _update_status():
 	if status_label:
 		if _dawn_online:
-			status_label.text = "D.A.W.N.: Online"
-			status_label.add_theme_color_override("font_color", Color("#00CC66"))
+			status_label.text = "● D.A.W.N.: Online"
+			status_label.add_theme_color_override("font_color", ArcReactorDark.STATUS_SUCCESS)
 		elif _mqtt:
-			status_label.text = "D.A.W.N.: Waiting..."
-			status_label.add_theme_color_override("font_color", Color("#CCAA00"))
+			status_label.text = "● D.A.W.N.: Waiting..."
+			status_label.add_theme_color_override("font_color", ArcReactorDark.STATUS_WARNING)
 		else:
 			status_label.text = "MQTT: Not connected"
-			status_label.add_theme_color_override("font_color", Color("#CC3333"))
+			status_label.add_theme_color_override("font_color", ArcReactorDark.STATUS_ERROR)
