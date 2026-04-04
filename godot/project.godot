@@ -7,7 +7,7 @@
 config/name="O.A.S.I.S. Godot Plugin"
 config/description="OCP plugin and demos for the O.A.S.I.S. ecosystem"
 config/version="0.1.0"
-run/main_scene="res://demos/oasis_monitor/scenes/main.tscn"
+run/main_scene="res://demos/e3_character/scenes/unified_demo.tscn"
 config/features=PackedStringArray("4.5")
 config/icon="res://icon.svg"
 
