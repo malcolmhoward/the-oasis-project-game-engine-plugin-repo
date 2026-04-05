@@ -217,13 +217,9 @@ func _exit_demo_mode():
 	# Companion stays visible — enters post-demo mode
 	if companion and companion.has_method("enter_post_demo"):
 		companion.enter_post_demo()
-	# Advance to next slide after the demo
-	if _current_index < _slides.size() - 1:
-		# Small delay to let queue_free process
-		await get_tree().process_frame
-		_show_slide(_current_index + 1, false)
-	elif _current_index > 0:
-		await get_tree().process_frame
+	# Show the slide at current index (already incremented during morph)
+	await get_tree().process_frame
+	if _current_index < _slides.size():
 		_show_slide(_current_index, false)
 
 
