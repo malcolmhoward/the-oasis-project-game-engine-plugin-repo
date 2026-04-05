@@ -172,6 +172,46 @@ The companion face is a persistent overlay that appears during live demos and op
 - The companion reacts to MQTT messages on the `dawn` topic (expression changes for intents, speaking animation for speech).
 - After the final slide, the companion can enter a standalone tray mode (borderless transparent window). Use `Shift+Escape` to restore the full window.
 
+## Running a Presentation
+
+### Prerequisites
+
+- Docker (for Mosquitto MQTT broker)
+- Python 3.10+ with `paho-mqtt` (`pip install paho-mqtt`)
+- Godot 4.5.2+ (download from https://godotengine.org)
+
+### Launch Steps
+
+```bash
+# 1. Start the MQTT broker (if not already running)
+docker start oasis-mqtt-test
+# Or first time: docker run -d --name oasis-mqtt-test -p 1883:1883 -p 9001:9001 eclipse-mosquitto:2
+
+# 2. Start the mock OCP traffic publisher
+python tools/mock_ocp_traffic.py --broker localhost --port 1883
+
+# 3. Launch the presentation (in a separate terminal)
+/path/to/Godot_v4.5.2-stable_win64.exe --path godot
+```
+
+The presentation controller auto-discovers the manifest at
+`res://scratch/presentations/default/presentation.json`. If no
+manifest is found, set `manifest_path` in the inspector or pass
+a different default search path.
+
+### Verifying Connectivity
+
+After launch, the Godot console should show:
+```
+[MQTTBridge] Connecting to ws://localhost:9001...
+[MQTTBridge] WebSocket open, sending MQTT CONNECT...
+[OasisMQTT] Connected to localhost:9001
+[Presentation] Loaded N slides, 0 appendix from ...
+```
+
+If MQTT does not connect, verify Mosquitto is running with
+WebSocket support on port 9001.
+
 ## Privacy Model
 
 The `scratch/` directory is gitignored. Presentation manifests, slide scenes, speaker notes, and any audience-specific content stored there remain private. The engine code (`SlideTemplate.gd`, `PresentationController.gd`, etc.) and reusable technical slides (`content/`) are committed and open-source.
