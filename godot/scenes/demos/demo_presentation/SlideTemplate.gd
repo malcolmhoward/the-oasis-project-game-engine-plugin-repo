@@ -29,11 +29,14 @@ var total_steps: int = 1
 
 
 ## Called by the presentation controller. Returns true if more steps remain.
+## Returns true = "I consumed this keypress, stay on this slide."
+## Returns false = "I'm done, controller should advance to next slide."
 func advance_step() -> bool:
+	if current_step >= total_steps:
+		return false  # All steps already shown — advance to next slide
 	current_step += 1
-	if current_step <= total_steps:
-		_animate_step(current_step)
-	return current_step < total_steps
+	_animate_step(current_step)
+	return true  # Step shown — stay on this slide
 
 
 ## Called by the presentation controller to go back one step.
