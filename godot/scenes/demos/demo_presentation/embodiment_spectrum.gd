@@ -23,7 +23,7 @@ const COLOR_ACCENT := Color("#2dd4bf")
 const COLOR_LABEL := Color("#cccccc")
 const COLOR_DAWN := Color("#2dd4bf")
 const COLOR_OCP := Color("#88aacc")
-const COLOR_DIM := Color("#333333")
+const COLOR_MUTED := Color("#999999")
 
 var _bar_progress := 0.0  # 0.0 to 1.0 for animated bar draw
 var _visible_points: Array[bool] = [false, false, false, false, false]
@@ -32,12 +32,20 @@ var _pulse_active := false
 var _pulse_timer := 0.0
 var _canvas: Control = null
 
+var _point_codes: Array[String] = ["E1", "E2", "E3", "E4", "E5"]
 var _point_names: Array[String] = [
-	"Virtual\nPresence",
-	"E.C.H.O.\nSimulation",
-	"Game Engine\nAvatar",
-	"Wearable /\nCosplay",
-	"Autonomous\nBody",
+	"Physical\nHardware",
+	"Remote-\nPhysical",
+	"Digital /\nVirtual",
+	"Software-\nOnly",
+	"Hybrid",
+]
+var _point_examples: Array[String] = [
+	"Jetson, RPi",
+	"Remote operator",
+	"Game avatar",
+	"Pure service",
+	"Provider swap",
 ]
 
 
@@ -127,8 +135,10 @@ func _on_canvas_draw() -> void:
 	# Title
 	var title_font = ThemeDB.fallback_font
 	var title_size = 56
-	_canvas.draw_string(title_font, Vector2(960 - 250, 100), "Embodiment Spectrum",
-		HORIZONTAL_ALIGNMENT_CENTER, -1, title_size, COLOR_ACCENT)
+	_canvas.draw_string(title_font, Vector2(80, 80), "Embodiment Spectrum — One Protocol, Any Body",
+		HORIZONTAL_ALIGNMENT_LEFT, 1760, title_size, COLOR_ACCENT)
+	_canvas.draw_string(title_font, Vector2(80, 120), "E1–E5 types connected by OCP",
+		HORIZONTAL_ALIGNMENT_LEFT, 1760, 24, Color("#999999"))
 
 	# Gradient bar
 	if _bar_progress > 0.0:
@@ -162,16 +172,27 @@ func _on_canvas_draw() -> void:
 		# Vertical tick on bar
 		_canvas.draw_line(Vector2(x, BAR_Y - 15), Vector2(x, BAR_Y + 15), COLOR_LABEL, 2.0)
 
+		# E-code above the icon (matches table slide)
+		var code_color = COLOR_COOL.lerp(COLOR_WARM, float(i) / 4.0)
+		_canvas.draw_string(title_font,
+			Vector2(x - 20, ICON_Y - 50 + pulse_offset),
+			_point_codes[i], HORIZONTAL_ALIGNMENT_CENTER, 40, 28, code_color)
+
 		# Icon above the point
 		_draw_icon(i, Vector2(x, ICON_Y + pulse_offset))
 
-		# Label below the point
+		# Name below the point
 		var label_font_size = 18
 		var lines = _point_names[i].split("\n")
 		for li in range(lines.size()):
 			_canvas.draw_string(title_font,
 				Vector2(x - 60, LABEL_Y + 25 + li * 22),
 				lines[li], HORIZONTAL_ALIGNMENT_CENTER, 120, label_font_size, COLOR_LABEL)
+
+		# Example in smaller muted text
+		_canvas.draw_string(title_font,
+			Vector2(x - 60, LABEL_Y + 25 + lines.size() * 22 + 8),
+			_point_examples[i], HORIZONTAL_ALIGNMENT_CENTER, 120, 14, Color("#999999"))
 
 	# D.A.W.N. label and connection lines
 	if _dawn_visible:
