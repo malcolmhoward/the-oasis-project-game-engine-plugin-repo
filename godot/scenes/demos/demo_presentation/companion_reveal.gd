@@ -21,8 +21,12 @@ var _blink_timer: float = 0.0
 var _blink_interval: float = 3.0
 var _is_blinking: bool = false
 var _reveal_timer: float = 0.0
-var _reveal_phase: int = 0  # 0=confused, 1=looking, 2=settled, 3=floating
+var _reveal_phase: int = 0  # 0=confused, 1=looking, 2=settled, 3=floating, 4=body_grow, 5=wave, 6=tray
 var _face_expression: int = 0  # 0=neutral, 1=confused, 2=looking, 3=smile
+var _body_grow: float = 0.0  # 0.0 to 1.0 — how much of the body is visible
+var _wave_timer: float = 0.0
+var _is_waving: bool = false
+var _arrived_at_corner: bool = false
 var _speaking_timer: float = 0.0
 var _speaking_duration: float = 0.0
 var _is_speaking: bool = false
@@ -159,7 +163,7 @@ func _process(delta: float):
 	face_canvas.queue_redraw()
 
 
-func _process_reveal(_delta: float):
+func _process_reveal(delta: float):
 	match _reveal_phase:
 		0:  # Wait a beat, then confused
 			if _reveal_timer > 0.8:
@@ -169,30 +173,41 @@ func _process_reveal(_delta: float):
 			if _reveal_timer > 2.5:
 				_face_expression = 2  # looking around
 				_reveal_phase = 2
-		2:  # Settle, then float
+		2:  # Settle with smile, then float to corner
 			if _reveal_timer > 4.0:
 				_face_expression = 3  # gentle smile
 				_reveal_phase = 3
-				_start_float_to_tray()
-		3:  # Floating (tween handles it)
+				_start_float_to_corner()
+		3:  # Floating to corner (tween handles it)
+			if _arrived_at_corner:
+				_reveal_phase = 4
+				_reveal_timer = 0.0  # Reset timer for body grow phase
+		4:  # Body grows — arms and legs extend
+			_body_grow = clampf((_reveal_timer) / 1.5, 0.0, 1.0)  # 1.5s to full body
+			if _reveal_timer > 1.8:
+				_reveal_phase = 5
+				_is_waving = true
+				_wave_timer = 0.0
+		5:  # Wave animation
+			_wave_timer += delta
+			if _wave_timer > 2.0:
+				_is_waving = false
+				_face_expression = 3  # settle to smile
+				_reveal_phase = 6
+				_transform_to_tray()
+		6:  # Tray mode (window transformed)
 			pass
 
 
-func _start_float_to_tray():
-	# Get screen info
-	var screen_size = DisplayServer.screen_get_size()
+func _start_float_to_corner():
+	# Float the face to the bottom-right of the current window
 	var window_size = DisplayServer.window_get_size()
-	var window_pos = DisplayServer.window_get_position()
-
-	# Target: bottom-right of screen, near taskbar
-	# First, animate the face to the bottom-right of the current window
 	var tween = create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(self, "position", Vector2(window_size.x - 120, window_size.y - 140), 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(self, "position", Vector2(window_size.x - 160, window_size.y - 180), 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(self, "scale", Vector2(1.5, 1.5), 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-
-	# After floating, shrink window to just the face
-	tween.chain().tween_callback(_transform_to_tray)
+	# Signal arrival so _process_reveal advances to body grow phase
+	tween.chain().tween_callback(func(): _arrived_at_corner = true)
 
 
 func _transform_to_tray():
@@ -335,3 +350,42 @@ func _draw_face(canvas: Control):
 		canvas.draw_arc(Vector2(center.x, mouth_y), mouth_width * 0.3, 0, TAU, 16, Color("2dd4bf"), 2.0)
 	else:  # neutral
 		canvas.draw_arc(Vector2(center.x, mouth_y - radius * 0.05), mouth_width * 0.6, 0.3, PI - 0.3, 12, Color("2dd4bf"), 2.0)
+
+	# Body — grows during reveal phase 4+
+	if _body_grow > 0.0:
+		var body_top = center.y + radius  # bottom of face circle
+		var body_color = Color("2dd4bf")
+		var limb_len = radius * 1.0 * _body_grow
+		var arm_len = radius * 0.8 * _body_grow
+
+		# Torso (short line down from face)
+		var torso_end = body_top + limb_len * 0.5
+		canvas.draw_line(Vector2(center.x, body_top), Vector2(center.x, torso_end), body_color, 2.0)
+
+		# Legs — angled outward from torso bottom
+		var leg_spread = 0.35  # radians from vertical
+		var leg_end_l = Vector2(center.x - sin(leg_spread) * limb_len, torso_end + cos(leg_spread) * limb_len)
+		var leg_end_r = Vector2(center.x + sin(leg_spread) * limb_len, torso_end + cos(leg_spread) * limb_len)
+		canvas.draw_line(Vector2(center.x, torso_end), leg_end_l, body_color, 2.0)
+		canvas.draw_line(Vector2(center.x, torso_end), leg_end_r, body_color, 2.0)
+
+		# Arms — from mid-torso
+		var arm_y = body_top + limb_len * 0.2
+		if _is_waving:
+			# Left arm: relaxed downward
+			var left_arm_angle = 0.6  # radians from horizontal
+			var left_end = Vector2(center.x - cos(left_arm_angle) * arm_len, arm_y + sin(left_arm_angle) * arm_len)
+			canvas.draw_line(Vector2(center.x, arm_y), left_end, body_color, 2.0)
+			# Right arm: raised and waving
+			var wave_angle = -1.2 + sin(_wave_timer * 6.0) * 0.4  # swing ±0.4 rad above horizontal
+			var right_end = Vector2(center.x + cos(wave_angle) * arm_len, arm_y + sin(wave_angle) * arm_len)
+			canvas.draw_line(Vector2(center.x, arm_y), right_end, body_color, 2.0)
+			# Small hand circle at wave tip
+			canvas.draw_circle(right_end, radius * 0.08, body_color)
+		else:
+			# Both arms relaxed at sides
+			var arm_angle = 0.6
+			var left_end = Vector2(center.x - cos(arm_angle) * arm_len, arm_y + sin(arm_angle) * arm_len)
+			var right_end = Vector2(center.x + cos(arm_angle) * arm_len, arm_y + sin(arm_angle) * arm_len)
+			canvas.draw_line(Vector2(center.x, arm_y), left_end, body_color, 2.0)
+			canvas.draw_line(Vector2(center.x, arm_y), right_end, body_color, 2.0)

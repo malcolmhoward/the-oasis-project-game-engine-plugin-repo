@@ -67,6 +67,7 @@ scroll_following = true
 
 [node name="CompanionOverlay" type="Control" parent="."]
 visible = false
+z_index = 100
 layout_mode = 0
 offset_left = 1560
 offset_top = 680
