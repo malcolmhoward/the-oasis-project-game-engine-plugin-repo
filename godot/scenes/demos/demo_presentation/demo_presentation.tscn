@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://demo_presentation"]
+[gd_scene load_steps=4 format=3 uid="uid://demo_presentation"]
 
 [ext_resource type="Script" path="res://scenes/demos/demo_presentation/PresentationController.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/demos/demo_presentation/ProgressIndicator.gd" id="2"]
+[ext_resource type="Script" path="res://scenes/demos/demo_presentation/companion_reveal.gd" id="3"]
 
 [node name="Presentation" type="Control"]
 layout_mode = 3
@@ -63,3 +64,38 @@ grow_vertical = 0
 layout_mode = 2
 bbcode_enabled = true
 scroll_following = true
+
+[node name="CompanionOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 1560
+offset_top = 680
+offset_right = 1680
+offset_bottom = 820
+script = ExtResource("3")
+persist_after_demo = true
+
+[node name="FaceCanvas" type="Control" parent="CompanionOverlay"]
+layout_mode = 0
+offset_left = 10
+offset_top = 0
+offset_right = 110
+offset_bottom = 80
+
+[node name="HealthBar" type="ProgressBar" parent="CompanionOverlay"]
+layout_mode = 0
+offset_left = 10
+offset_top = 85
+offset_right = 110
+offset_bottom = 95
+value = 85.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="CompanionOverlay"]
+layout_mode = 0
+offset_left = 10
+offset_top = 98
+offset_right = 110
+offset_bottom = 118
+horizontal_alignment = 1
+text = "OCP Health"
