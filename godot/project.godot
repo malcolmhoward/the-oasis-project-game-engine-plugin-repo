@@ -7,7 +7,7 @@
 config/name="O.A.S.I.S. Godot Plugin"
 config/description="OCP plugin and demos for the O.A.S.I.S. ecosystem"
 config/version="0.1.0"
-run/main_scene="res://demos/e3_character/scenes/unified_demo.tscn"
+run/main_scene="res://scenes/demos/demo_presentation/demo_presentation.tscn"
 config/features=PackedStringArray("4.5")
 config/icon="res://icon.svg"
 
@@ -42,6 +42,10 @@ gdscript/warnings/unsafe_property_access=0
 gdscript/warnings/unsafe_method_access=0
 gdscript/warnings/unsafe_cast=0
 gdscript/warnings/unsafe_call_argument=0
+
+[audio]
+
+driver/enable_input=true
 
 [rendering]
 
