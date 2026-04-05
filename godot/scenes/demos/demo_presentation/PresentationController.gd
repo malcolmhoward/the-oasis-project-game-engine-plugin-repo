@@ -19,6 +19,7 @@ var _transitions: Dictionary = {}
 var _current_index: int = 0
 var _current_slide: Control = null
 var _is_in_appendix: bool = false
+var _demo_mode: bool = false  # True when live demo is active — disables slide navigation
 
 @onready var slide_container: Control = $SlideContainer
 @onready var progress_indicator: Control = $ProgressIndicator
@@ -53,6 +54,14 @@ func _ready():
 func _input(event: InputEvent):
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+
+	# In demo mode, only Escape exits back to presentation
+	if _demo_mode:
+		if event.keycode == KEY_ESCAPE:
+			_exit_demo_mode()
+		# All other keys pass through to the demo (DAWN panel, etc.)
+		return
+
 	match event.keycode:
 		KEY_RIGHT, KEY_SPACE:
 			_advance()
@@ -76,6 +85,10 @@ func _advance():
 	if _transitions.has(morph_key):
 		_execute_morph(_transitions[morph_key])
 		return
+	# If in demo mode (current_slide is null), clean up demo content first
+	if _current_slide == null:
+		for child in slide_container.get_children():
+			child.queue_free()
 	# Advance to next slide
 	if _current_index < _slides.size() - 1:
 		_show_slide(_current_index + 1, true)
@@ -86,6 +99,10 @@ func _retreat():
 		_current_slide.retreat_step()
 		return
 	if _current_index > 0:
+		# If in demo mode, clean up demo first
+		if _current_slide == null:
+			for child in slide_container.get_children():
+				child.queue_free()
 		_show_slide(_current_index - 1, true)
 
 
@@ -119,6 +136,10 @@ func _show_slide(index: int, animate: bool):
 	_current_slide = new_slide
 	_current_index = index
 
+	# Auto-play step 1 so the slide isn't blank on load
+	if _current_slide and _current_slide.has_method("advance_step"):
+		_current_slide.advance_step()
+
 	# Update speaking cue
 	if speaking_cue:
 		speaking_cue.text = slide_data.get("cue", "")
@@ -137,7 +158,9 @@ func _execute_morph(transition_data: Dictionary):
 
 	if demo_scene_path.is_empty() or not ResourceLoader.exists(demo_scene_path):
 		push_warning("Morph target scene not found: %s" % demo_scene_path)
-		_advance()  # Skip morph, go to next slide
+		# Fall through to next slide instead of recursing
+		if _current_index < _slides.size() - 1:
+			_show_slide(_current_index + 1, true)
 		return
 
 	var demo_scene = load(demo_scene_path)
@@ -148,12 +171,40 @@ func _execute_morph(transition_data: Dictionary):
 			if child.is_in_group("morph_panel"):
 				panels.append(child)
 
+	# Clean up the current slide before morphing — prevents it showing behind demo
+	if _current_slide:
+		_current_slide.queue_free()
+		_current_slide = null
+
 	morph.morph(panels, demo_scene, duration, slide_container)
+	_demo_mode = true  # Disable slide navigation, let demo handle input
 	_current_index += 1
 	_update_progress()
 
-	if speaking_cue and _current_index < _slides.size():
-		speaking_cue.text = _slides[_current_index].get("cue", "")
+	if speaking_cue:
+		speaking_cue.text = "LIVE DEMO — press Escape to return to slides"
+
+	# Hide progress dots and speaking cue during demo
+	if progress_indicator:
+		progress_indicator.visible = false
+
+
+func _exit_demo_mode():
+	_demo_mode = false
+	# Clean up demo scene from slide container
+	for child in slide_container.get_children():
+		child.queue_free()
+	# Restore UI
+	if progress_indicator:
+		progress_indicator.visible = true
+	# Advance to next slide after the demo
+	if _current_index < _slides.size() - 1:
+		# Small delay to let queue_free process
+		await get_tree().process_frame
+		_show_slide(_current_index + 1, false)
+	elif _current_index > 0:
+		await get_tree().process_frame
+		_show_slide(_current_index, false)
 
 
 func _toggle_annotations():
