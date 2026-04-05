@@ -20,11 +20,14 @@ var _current_index: int = 0
 var _current_slide: Control = null
 var _is_in_appendix: bool = false
 var _demo_mode: bool = false  # True when live demo is active — disables slide navigation
+var _pre_demo_index: int = -1  # Slide index before entering demo — for quick toggle
+var _saved_slide: Control = null  # Preserved slide instance for Ctrl+D toggle
 
 @onready var slide_container: Control = $SlideContainer
 @onready var progress_indicator: Control = $ProgressIndicator
 @onready var speaking_cue: Label = $SpeakingCue
 @onready var debug_panel: Control = $DebugPanel
+@onready var companion: Control = $CompanionOverlay
 
 @export var manifest_path: String = ""
 
@@ -53,6 +56,12 @@ func _ready():
 
 func _input(event: InputEvent):
 	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+
+	# Ctrl+D toggles between demo and slides — works in both modes
+	if event.ctrl_pressed and event.keycode == KEY_D:
+		_toggle_demo()
+		get_viewport().set_input_as_handled()
 		return
 
 	# In demo mode, only Escape exits back to presentation
@@ -92,6 +101,9 @@ func _advance():
 	# Advance to next slide
 	if _current_index < _slides.size() - 1:
 		_show_slide(_current_index + 1, true)
+	else:
+		# Past the last slide — trigger companion reveal
+		_trigger_companion_reveal()
 
 
 func _retreat():
@@ -177,16 +189,21 @@ func _execute_morph(transition_data: Dictionary):
 		_current_slide = null
 
 	morph.morph(panels, demo_scene, duration, slide_container)
+	_pre_demo_index = _current_index  # Remember where we were for F7 toggle
 	_demo_mode = true  # Disable slide navigation, let demo handle input
 	_current_index += 1
 	_update_progress()
 
 	if speaking_cue:
-		speaking_cue.text = "LIVE DEMO — press Escape to return to slides"
+		speaking_cue.text = "LIVE DEMO — Escape or Ctrl+D to return to slides"
 
-	# Hide progress dots and speaking cue during demo
+	# Hide progress dots during demo
 	if progress_indicator:
 		progress_indicator.visible = false
+
+	# Show persistent companion face (overlays the demo)
+	if companion and companion.has_method("show_for_demo"):
+		companion.show_for_demo()
 
 
 func _exit_demo_mode():
@@ -197,6 +214,9 @@ func _exit_demo_mode():
 	# Restore UI
 	if progress_indicator:
 		progress_indicator.visible = true
+	# Companion stays visible — enters post-demo mode
+	if companion and companion.has_method("enter_post_demo"):
+		companion.enter_post_demo()
 	# Advance to next slide after the demo
 	if _current_index < _slides.size() - 1:
 		# Small delay to let queue_free process
@@ -205,6 +225,83 @@ func _exit_demo_mode():
 	elif _current_index > 0:
 		await get_tree().process_frame
 		_show_slide(_current_index, false)
+
+
+func _toggle_demo():
+	"""Ctrl+D — quick toggle between demo and the slide you were on."""
+	if _demo_mode:
+		# Exit demo — hide demo, restore saved slide with its state intact
+		_demo_mode = false
+		for child in slide_container.get_children():
+			child.visible = false
+		if progress_indicator:
+			progress_indicator.visible = true
+		if companion and companion.has_method("enter_post_demo"):
+			companion.enter_post_demo()
+		# Restore the saved slide (with all animation state preserved)
+		if _saved_slide:
+			_saved_slide.visible = true
+			_current_slide = _saved_slide
+		if speaking_cue and _current_index < _slides.size():
+			speaking_cue.text = _slides[_current_index].get("cue", "")
+		_update_progress()
+	else:
+		# Enter/re-enter demo from any slide
+		# Find the demo transition if we haven't seen it yet
+		if _pre_demo_index < 0:
+			for key in _transitions:
+				if _transitions[key].get("type") == "morph_to_demo":
+					# Extract index from key like "slide_06_to_slide_07"
+					_pre_demo_index = int(key.substr(6, 2)) - 1
+					break
+			if _pre_demo_index < 0:
+				return  # No demo transition defined
+		# Save current slide (don't destroy it — preserve animation state)
+		if _current_slide:
+			_current_slide.visible = false
+			_saved_slide = _current_slide
+			_current_slide = null
+		# Check if demo scene is already loaded (just hidden)
+		var demo_exists = false
+		for child in slide_container.get_children():
+			if child != _saved_slide and not child.visible:
+				child.visible = true
+				demo_exists = true
+				break
+		if not demo_exists:
+			# Load the demo scene fresh
+			var morph_key = "slide_%02d_to_slide_%02d" % [_pre_demo_index + 1, _pre_demo_index + 2]
+			var transition_data = _transitions.get(morph_key, {})
+			var demo_path = transition_data.get("demo_scene", "")
+			if demo_path.is_empty() or not ResourceLoader.exists(demo_path):
+				return
+			var demo_scene = load(demo_path).instantiate()
+			slide_container.add_child(demo_scene)
+		_demo_mode = true
+		if progress_indicator:
+			progress_indicator.visible = false
+		if speaking_cue:
+			speaking_cue.text = "LIVE DEMO — Ctrl+D to return to slides"
+		if companion and companion.has_method("show_for_demo"):
+			companion.show_for_demo()
+
+
+func _trigger_companion_reveal():
+	# Fade out the current slide content
+	if _current_slide:
+		var tween = create_tween()
+		tween.tween_property(_current_slide, "modulate:a", 0.0, 1.0)
+		tween.tween_callback(func(): _current_slide.queue_free(); _current_slide = null)
+
+	# Hide presentation chrome
+	if progress_indicator:
+		progress_indicator.visible = false
+	if speaking_cue:
+		speaking_cue.text = ""
+
+	# Trigger the companion's reveal sequence
+	if companion and companion.has_method("trigger_reveal"):
+		companion.trigger_reveal()
 
 
 func _toggle_annotations():
