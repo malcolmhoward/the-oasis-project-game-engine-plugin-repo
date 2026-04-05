@@ -24,6 +24,13 @@ func _ready():
 	send_button.pressed.connect(_on_send)
 	input_field.text_submitted.connect(_on_send_text)
 
+	# Prevent scroll container from stealing focus from input field
+	var scroll = $VBoxContainer/ScrollContainer
+	if scroll:
+		scroll.focus_mode = Control.FOCUS_NONE
+	if conversation:
+		conversation.focus_mode = Control.FOCUS_NONE
+
 	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
 		_mqtt = oasis_mqtt.get_mqtt()
@@ -31,6 +38,12 @@ func _ready():
 		oasis_mqtt.peer_discovered.connect(_on_peer_discovered)
 
 	_update_status()
+
+	# Keep editing mode after Enter — Godot 4.4+ exits editing by default
+	# (LineEdit keeps focus but stops accepting typed characters)
+	if input_field:
+		input_field.keep_editing_on_text_submit = true
+		input_field.grab_focus.call_deferred()
 
 
 func _on_send():
@@ -51,6 +64,7 @@ func _on_send_text(text: String):
 		}))
 	user_message_sent.emit(text)
 	input_field.clear()
+	input_field.grab_focus()
 
 
 func _on_mqtt_message(topic: String, payload: String):
@@ -101,6 +115,11 @@ func _add_message(sender: String, text: String, color: Color):
 	await get_tree().process_frame
 	var scroll = $VBoxContainer/ScrollContainer
 	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+	# Re-grab focus after UI settles (wait 2 frames for layout + scroll)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if input_field and is_inside_tree():
+		input_field.grab_focus()
 
 
 func _update_status():
