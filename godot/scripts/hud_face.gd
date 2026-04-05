@@ -10,9 +10,10 @@
 ##   worried  — high CPU/temp, peer went offline
 ##   curious  — new peer discovered, new topic activity
 ##   sleeping — long idle period (30s+ no messages)
+##   speaking — jaw moves rhythmically while D.A.W.N. types response
 extends Control
 
-enum FaceExpression { NEUTRAL, HAPPY, WORRIED, CURIOUS, SLEEPING }
+enum FaceExpression { NEUTRAL, HAPPY, WORRIED, CURIOUS, SLEEPING, SPEAKING }
 
 var _current_expression: FaceExpression = FaceExpression.NEUTRAL
 var _blink_timer: float = 0.0
@@ -22,6 +23,8 @@ var _blink_duration: float = 0.15
 var _idle_timer: float = 0.0
 var _expression_timer: float = 0.0
 var _expression_duration: float = 2.0
+var _speaking_timer: float = 0.0
+var _speaking_duration: float = 0.0
 var _health: float = 1.0
 var _mqtt = null
 var _msg_count: int = 0
@@ -61,8 +64,14 @@ func _process(delta: float):
 	if _idle_timer > 30.0 and _current_expression == FaceExpression.NEUTRAL:
 		_set_expression(FaceExpression.SLEEPING)
 
-	# Expression timeout — return to neutral
-	if _current_expression != FaceExpression.NEUTRAL and _current_expression != FaceExpression.SLEEPING:
+	# Speaking timer — transition to happy when done talking
+	if _current_expression == FaceExpression.SPEAKING:
+		_speaking_timer += delta
+		if _speaking_timer >= _speaking_duration:
+			_set_expression(FaceExpression.HAPPY)
+
+	# Expression timeout — return to neutral (skip speaking, it has its own timer)
+	if _current_expression != FaceExpression.NEUTRAL and _current_expression != FaceExpression.SLEEPING and _current_expression != FaceExpression.SPEAKING:
 		_expression_timer += delta
 		if _expression_timer >= _expression_duration:
 			_set_expression(FaceExpression.NEUTRAL)
@@ -93,8 +102,11 @@ func _on_mqtt_message(_topic: String, _payload: String):
 				# User typed something — curious (listening)
 				_set_expression(FaceExpression.CURIOUS)
 			elif msg.get("action") == "speak":
-				# D.A.W.N. responded — happy (brief)
-				_set_expression(FaceExpression.HAPPY)
+				# D.A.W.N. responded — speak with jaw moving
+				var response_text = str(msg.get("value", ""))
+				_speaking_duration = response_text.length() / 50.0  # match typewriter speed
+				_speaking_timer = 0.0
+				_set_expression(FaceExpression.SPEAKING)
 
 		# High temperature → worried
 		if msg.has("temp") and float(msg.get("temp", 22)) > 35:
@@ -192,6 +204,34 @@ func _draw_face(canvas: Control):
 				mouth_width * 0.4, 0, TAU, 16,
 				ArcReactorDark.ARC_CORE, 2.0
 			)
+		FaceExpression.SPEAKING:
+			# Jaw opens and closes — top lip stays, bottom drops rhythmically
+			var open_amount = abs(sin(_speaking_timer * 8.0))  # ~4 syllables/sec
+			var jaw_drop = radius * 0.15 * open_amount
+			# Top lip (fixed)
+			canvas.draw_line(
+				Vector2(center.x - mouth_width * 0.4, mouth_y),
+				Vector2(center.x + mouth_width * 0.4, mouth_y),
+				ArcReactorDark.ARC_CORE, 2.0
+			)
+			# Bottom jaw (moves down)
+			canvas.draw_line(
+				Vector2(center.x - mouth_width * 0.3, mouth_y + jaw_drop + radius * 0.06),
+				Vector2(center.x + mouth_width * 0.3, mouth_y + jaw_drop + radius * 0.06),
+				ArcReactorDark.ARC_CORE, 2.0
+			)
+			# Side lines connecting top and bottom
+			if jaw_drop > radius * 0.03:
+				canvas.draw_line(
+					Vector2(center.x - mouth_width * 0.4, mouth_y),
+					Vector2(center.x - mouth_width * 0.3, mouth_y + jaw_drop + radius * 0.06),
+					ArcReactorDark.ARC_CORE, 1.5
+				)
+				canvas.draw_line(
+					Vector2(center.x + mouth_width * 0.4, mouth_y),
+					Vector2(center.x + mouth_width * 0.3, mouth_y + jaw_drop + radius * 0.06),
+					ArcReactorDark.ARC_CORE, 1.5
+				)
 		FaceExpression.SLEEPING:
 			# Flat line with Zs
 			canvas.draw_line(
