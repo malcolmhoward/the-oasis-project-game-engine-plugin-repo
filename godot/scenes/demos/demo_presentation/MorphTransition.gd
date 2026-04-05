@@ -19,7 +19,7 @@ signal morph_completed()
 
 func morph(from_panels: Array[Control], to_scene: PackedScene,
 		   duration: float, container: Control) -> void:
-	if from_panels.is_empty() or to_scene == null:
+	if to_scene == null:
 		morph_completed.emit()
 		queue_free()
 		return
@@ -47,19 +47,21 @@ func morph(from_panels: Array[Control], to_scene: PackedScene,
 			# No target — tween to center
 			target_rects.append(Rect2(container.global_position, container.size))
 
-	# Tween panels from source to target positions
+	# Tween panels from source to target positions (if any)
 	var tween = create_tween()
-	tween.set_parallel(true)
-
-	for i in range(from_panels.size()):
-		if i < target_rects.size():
-			var panel = from_panels[i]
-			var target_rect = target_rects[i]
-			tween.tween_property(panel, "global_position", target_rect.position, duration).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
-			tween.tween_property(panel, "size", target_rect.size, duration).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
-
-	# Fade in the target scene as panels arrive
-	tween.chain().tween_property(target, "modulate:a", 1.0, duration * 0.3)
+	if not from_panels.is_empty():
+		tween.set_parallel(true)
+		for i in range(from_panels.size()):
+			if i < target_rects.size():
+				var panel = from_panels[i]
+				var target_rect = target_rects[i]
+				tween.tween_property(panel, "global_position", target_rect.position, duration).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+				tween.tween_property(panel, "size", target_rect.size, duration).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+		# Fade in target after panels arrive
+		tween.chain().tween_property(target, "modulate:a", 1.0, duration * 0.3)
+	else:
+		# No panels to morph — just fade in the demo scene directly
+		tween.tween_property(target, "modulate:a", 1.0, duration * 0.5)
 
 	# Clean up source panels after morph (if not already freed by controller)
 	tween.chain().tween_callback(func():
