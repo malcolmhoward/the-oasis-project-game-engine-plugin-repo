@@ -1,10 +1,10 @@
-# O.A.S.I.S. Game Engine Plugin — Godot 4.6
+# O.A.S.I.S. Game Engine Plugin — Godot 4.5
 
 > **Naming note**: This repository uses a temporary name pending the project lead's selection.
 
 ## Overview
 
-The Godot OCP plugin enables any Godot 4.6 project to participate on the O.A.S.I.S. MQTT (Message Queuing Telemetry Transport) network. Game scenes can subscribe to real-time sensor data, publish OCP (OASIS Communications Protocol) status messages, and host virtual avatars that are first-class peers on the same network as physical O.A.S.I.S. hardware.
+The Godot OCP plugin enables any Godot 4.5 project to participate on the O.A.S.I.S. MQTT (Message Queuing Telemetry Transport) network. Game scenes can subscribe to real-time sensor data, publish OCP (OASIS Communications Protocol) status messages, and host virtual avatars that are first-class peers on the same network as physical O.A.S.I.S. hardware.
 
 The plugin registers game engine entities as E3 (digital/virtual) peers per the OCP embodiment spectrum (ADR-0003 Amendment 5). A Godot character publishing to `oasis/<peer_id>/status` is indistinguishable from M.I.R.A.G.E. on a Jetson to any MQTT subscriber.
 
@@ -12,7 +12,7 @@ The plugin registers game engine entities as E3 (digital/virtual) peers per the 
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| Godot Engine | 4.6+ | Game engine runtime |
+| Godot Engine | 4.5+ | Game engine runtime |
 | Mosquitto | 2.x | MQTT broker (WebSocket listener on port 9001) |
 
 No external GDScript libraries required — the MQTT client (`mqtt_bridge.gd`) implements MQTT v3.1.1 packet encoding over WebSocket natively.
@@ -37,7 +37,7 @@ Optional:
 ```bash
 git clone https://github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo.git
 cd the-oasis-project-game-engine-plugin-repo/godot
-# Open in Godot 4.6 editor
+# Open in Godot 4.5 editor
 ```
 
 ## Configuration
@@ -119,6 +119,18 @@ A 3D avatar that is a live OCP E3 peer:
 - Publishes `oasis/e3-avatar/status` with standard OCP schema
 - Responds to commands on its subscription topics
 - Visible in the `oasis_monitor` peer status panel
+
+### demo_presentation — Manifest-Driven Presentation Engine
+
+A reusable presentation system (`godot/scenes/demos/demo_presentation/`) that renders slide decks from JSON manifests with morph transitions between slides. Includes reusable visualizations (embodiment spectrum, provider diagram) that can be embedded in any scene. See the [presentation engine README](../godot/scenes/demos/demo_presentation/README.md) for manifest format and customization.
+
+### audio_monitor — Audio Input Monitor
+
+A standalone scene (`godot/scenes/audio_monitor.tscn`) that visualizes audio input levels and demonstrates the Provider pattern with hot-swap between audio sources.
+
+### Mock OCP Traffic Tool
+
+The `tools/mock_ocp_traffic.py` script generates simulated OCP messages on MQTT topics, enabling development and testing without Docker or the full E.C.H.O. simulation stack. Requires only a running Mosquitto broker.
 
 ## Communication
 

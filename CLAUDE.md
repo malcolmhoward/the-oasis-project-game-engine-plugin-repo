@@ -2,12 +2,12 @@
 
 ## Project Overview
 
-This repository contains OCP (OASIS Communications Protocol) plugins for game engines, starting with Godot 4.6. The plugins enable game engine scenes to participate on the O.A.S.I.S. MQTT (Message Queuing Telemetry Transport) network as E3 (digital/virtual) peers — subscribing to sensor data, publishing status, and hosting virtual avatars that are indistinguishable from physical peers on the wire.
+This repository contains OCP (OASIS Communications Protocol) plugins for game engines, starting with Godot 4.5. The plugins enable game engine scenes to participate on the O.A.S.I.S. MQTT (Message Queuing Telemetry Transport) network as E3 (digital/virtual) peers — subscribing to sensor data, publishing status, and hosting virtual avatars that are indistinguishable from physical peers on the wire.
 
 The repository is structured for multiple engines:
 
 ```
-godot/          Godot 4.6 OCP plugin + demos (current)
+godot/          Godot 4.5 OCP plugin + demos (current)
 unreal/         Future: Unreal OCP plugin
 unity/          Future: Unity OCP integration
 coordination/   Cross-engine design decisions
@@ -34,6 +34,9 @@ coordination/   Cross-engine design decisions
 |-------|---------|
 | `godot/demos/oasis_monitor/` | Architecture visualization — three-layer view of Device/Network/Platform traffic |
 | `godot/demos/e3_character/` | 3D game scene with avatar that is an E3 OCP peer |
+| `godot/demos/dawn_ui/` | D.A.W.N. assistant interactive UI |
+| `godot/scenes/demos/demo_presentation/` | Reusable manifest-driven presentation engine |
+| `godot/scenes/audio_monitor.tscn` | Audio input monitor with Provider hot-swap |
 
 ## OCP Integration
 
