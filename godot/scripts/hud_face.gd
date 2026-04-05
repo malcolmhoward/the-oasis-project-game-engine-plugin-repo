@@ -104,9 +104,16 @@ func _on_mqtt_message(_topic: String, _payload: String):
 			elif msg.get("action") == "speak":
 				# D.A.W.N. responded — speak with jaw moving
 				var response_text = str(msg.get("value", ""))
-				_speaking_duration = response_text.length() / 50.0  # match typewriter speed
+				_speaking_duration = response_text.length() / 50.0
 				_speaking_timer = 0.0
-				_set_expression(FaceExpression.SPEAKING)
+				if msg.get("confused", false):
+					# Show confusion first, then speak
+					_set_expression(FaceExpression.CURIOUS)
+					get_tree().create_timer(0.8).timeout.connect(func():
+						_set_expression(FaceExpression.SPEAKING)
+					, CONNECT_ONE_SHOT)
+				else:
+					_set_expression(FaceExpression.SPEAKING)
 
 		# High temperature → worried
 		if msg.has("temp") and float(msg.get("temp", 22)) > 35:
