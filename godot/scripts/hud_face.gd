@@ -87,6 +87,15 @@ func _on_mqtt_message(_topic: String, _payload: String):
 	# Parse for system state
 	var msg = JSON.parse_string(_payload)
 	if msg is Dictionary:
+		# DAWN conversation reactions (subtle — enhances companion reveal)
+		if _topic == "dawn":
+			if msg.get("action") == "process_intent":
+				# User typed something — curious (listening)
+				_set_expression(FaceExpression.CURIOUS)
+			elif msg.get("action") == "speak":
+				# D.A.W.N. responded — happy (brief)
+				_set_expression(FaceExpression.HAPPY)
+
 		# High temperature → worried
 		if msg.has("temp") and float(msg.get("temp", 22)) > 35:
 			_set_expression(FaceExpression.WORRIED)
