@@ -89,6 +89,9 @@ func _add_message(sender: String, text: String, color: Color):
 	var role = MessageBubble.Role.USER if sender == "You" else MessageBubble.Role.ASSISTANT
 	var bubble = MessageBubble.create(role, sender, text)
 	conversation.add_child(bubble)
+	# Typewriter effect for assistant responses
+	if role == MessageBubble.Role.ASSISTANT:
+		bubble.typewrite(50.0)  # 50 chars/sec
 	# Remove oldest messages to prevent memory growth
 	while conversation.get_child_count() > MAX_MESSAGES:
 		var oldest = conversation.get_child(0)
