@@ -12,6 +12,7 @@ extends PanelContainer
 enum Role { USER, ASSISTANT, SYSTEM, DEBUG }
 
 var _role: Role = Role.USER
+var _msg_label: RichTextLabel = null
 
 
 static func create(role: Role, sender: String, text: String) -> MessageBubble:
@@ -19,6 +20,19 @@ static func create(role: Role, sender: String, text: String) -> MessageBubble:
 	bubble._role = role
 	bubble._build(sender, text)
 	return bubble
+
+
+## Typewriter effect — reveals text character by character.
+## Returns the tween so callers can await completion.
+func typewrite(chars_per_sec: float = 40.0) -> Tween:
+	if _msg_label == null or _msg_label.text.is_empty():
+		return null
+	var total_chars = _msg_label.text.length()
+	_msg_label.visible_characters = 0
+	var duration = total_chars / chars_per_sec
+	var tween = create_tween()
+	tween.tween_property(_msg_label, "visible_characters", total_chars, duration)
+	return tween
 
 
 func _build(sender: String, text: String) -> void:
@@ -71,7 +85,8 @@ func _build(sender: String, text: String) -> void:
 	vbox.add_child(role_label)
 
 	# Message text — Source Sans 3, sentence case
-	var msg_label = RichTextLabel.new()
+	_msg_label = RichTextLabel.new()
+	var msg_label = _msg_label
 	msg_label.bbcode_enabled = true
 	msg_label.fit_content = true
 	msg_label.scroll_active = false
