@@ -61,10 +61,11 @@ func morph(from_panels: Array[Control], to_scene: PackedScene,
 	# Fade in the target scene as panels arrive
 	tween.chain().tween_property(target, "modulate:a", 1.0, duration * 0.3)
 
-	# Clean up source panels after morph
+	# Clean up source panels after morph (if not already freed by controller)
 	tween.chain().tween_callback(func():
 		for panel in from_panels:
-			panel.queue_free()
+			if is_instance_valid(panel):
+				panel.queue_free()
 		morph_completed.emit()
 		queue_free()
 	)
