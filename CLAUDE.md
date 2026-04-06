@@ -34,6 +34,9 @@ coordination/   Cross-engine design decisions
 |-------|---------|
 | `godot/demos/oasis_monitor/` | Architecture visualization — three-layer view of Device/Network/Platform traffic |
 | `godot/demos/e3_character/` | 3D game scene with avatar that is an E3 OCP peer |
+| `godot/demos/dawn_ui/` | D.A.W.N. assistant interactive UI |
+| `godot/scenes/demos/demo_presentation/` | Reusable manifest-driven presentation engine |
+| `godot/scenes/audio_monitor.tscn` | Audio input monitor with Provider hot-swap |
 
 ## OCP Integration
 
