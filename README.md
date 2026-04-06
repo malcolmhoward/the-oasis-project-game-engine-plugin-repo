@@ -32,6 +32,20 @@ Each engine plugin implements the same OCP interface:
 
 The protocol is identical across engines. An OCP peer in Godot and an OCP peer in Unreal are indistinguishable on the MQTT network.
 
+## Demos and Tools
+
+The Godot plugin ships with several runnable demos:
+
+- **Architecture Monitor** (`godot/demos/oasis_monitor/`) — Three-layer visualization of live Device/Network/Platform OCP traffic
+- **E3 Character** (`godot/demos/e3_character/`) — 3D avatar that is a first-class OCP peer on the MQTT network
+- **D.A.W.N. UI** (`godot/demos/dawn_ui/`) — Interactive UI for the D.A.W.N. assistant
+- **Presentation Engine** (`godot/scenes/demos/demo_presentation/`) — Reusable, manifest-driven presentation system with morph transitions and reusable visualizations (embodiment spectrum, provider diagram)
+- **Audio Monitor** (`godot/scenes/audio_monitor.tscn`) — Audio input monitor demonstrating Provider pattern hot-swap
+
+Development tools:
+
+- **Mock OCP Traffic** (`tools/mock_ocp_traffic.py`) — Generates simulated OCP messages for Docker-free development and testing
+
 ## Quick Start
 
 See [`godot/README.md`](godot/README.md) for Godot-specific setup and demo instructions.
