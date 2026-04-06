@@ -120,6 +120,18 @@ A 3D avatar that is a live OCP E3 peer:
 - Responds to commands on its subscription topics
 - Visible in the `oasis_monitor` peer status panel
 
+### demo_presentation — Manifest-Driven Presentation Engine
+
+A reusable presentation system (`godot/scenes/demos/demo_presentation/`) that renders slide decks from JSON manifests with morph transitions between slides. Includes reusable visualizations (embodiment spectrum, provider diagram) that can be embedded in any scene. See the [presentation engine README](../godot/scenes/demos/demo_presentation/README.md) for manifest format and customization.
+
+### audio_monitor — Audio Input Monitor
+
+A standalone scene (`godot/scenes/audio_monitor.tscn`) that visualizes audio input levels and demonstrates the Provider pattern with hot-swap between audio sources.
+
+### Mock OCP Traffic Tool
+
+The `tools/mock_ocp_traffic.py` script generates simulated OCP messages on MQTT topics, enabling development and testing without Docker or the full E.C.H.O. simulation stack. Requires only a running Mosquitto broker.
+
 ## Communication
 
 ### MQTT Topics (OCP)

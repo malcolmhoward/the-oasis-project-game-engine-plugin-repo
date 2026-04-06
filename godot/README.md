@@ -16,12 +16,15 @@ A reusable Godot plugin (`addons/oasis_ocp/`) that provides:
   command subscription, discovery, inhabitation events)
 - **OasisMQTT autoload** — Global MQTT connection manager and peer registry
 
-Plus two runnable demos:
+Plus runnable demos and tools:
 
 | Demo | What it shows |
 |------|--------------|
 | `demos/oasis_monitor/` | Three-layer architecture visualization (Device, Network, Platform) with animated OCP message traffic |
 | `demos/e3_character/` | A game character that is a first-class OCP peer — navigates, publishes virtual sensors, can be inhabited |
+| `demos/dawn_ui/` | D.A.W.N. assistant interactive UI |
+| `scenes/demos/demo_presentation/` | Reusable manifest-driven presentation engine with morph transitions and embeddable visualizations |
+| `scenes/audio_monitor.tscn` | Audio input monitor demonstrating Provider pattern hot-swap |
 
 ## Quick Start
 
@@ -56,7 +59,7 @@ pip install -e ".[all]"
 python -m simulation.demo  # (when available)
 
 # Terminal 3: Open in Godot
-cd the-oasis-project-godot-plugin-repo
+cd the-oasis-project-game-engine-plugin-repo
 godot --path . --editor  # or just double-click project.godot
 # Press F5 to run
 ```
@@ -106,9 +109,15 @@ demos/
 │   ├── scenes/             # .tscn scene files
 │   ├── scripts/            # Panel controllers
 │   └── resources/          # Theme, fonts, materials
-└── e3_character/           # E3 digital peer (game character as OCP peer)
-    ├── scenes/             # Character scene, game world
-    └── scripts/            # Avatar controller with navigation
+├── e3_character/           # E3 digital peer (game character as OCP peer)
+│   ├── scenes/             # Character scene, game world
+│   └── scripts/            # Avatar controller with navigation
+└── dawn_ui/                # D.A.W.N. assistant interactive UI
+
+scenes/
+├── demos/
+│   └── demo_presentation/  # Manifest-driven presentation engine
+└── audio_monitor.tscn      # Audio input monitor with Provider hot-swap
 ```
 
 ### How It Connects to O.A.S.I.S.
