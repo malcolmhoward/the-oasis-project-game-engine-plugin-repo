@@ -73,8 +73,44 @@ func _on_ocp_command(action: String, parameters: Dictionary) -> void:
 			var x: float = parameters.get("x", global_position.x)
 			var z: float = parameters.get("z", global_position.z)
 			global_position = Vector3(x, global_position.y, z)
+		"move_forward":
+			var dir := -transform.basis.z.normalized()
+			_move_step(dir, parameters.get("distance", 1.0))
+		"move_back":
+			var dir := transform.basis.z.normalized()
+			_move_step(dir, parameters.get("distance", 1.0))
+		"move_left":
+			var dir := -transform.basis.x.normalized()
+			_move_step(dir, parameters.get("distance", 1.0))
+		"move_right":
+			var dir := transform.basis.x.normalized()
+			_move_step(dir, parameters.get("distance", 1.0))
+		"turn_left":
+			var tween := create_tween()
+			tween.tween_property(self, "rotation:y", rotation.y + deg_to_rad(45), 0.3)
+		"turn_right":
+			var tween := create_tween()
+			tween.tween_property(self, "rotation:y", rotation.y - deg_to_rad(45), 0.3)
+		"jump":
+			_play_jump()
 		_:
 			push_warning("E3Avatar: Unknown OCP command '%s'" % action)
+
+
+func _move_step(direction: Vector3, distance: float) -> void:
+	direction.y = 0
+	var target := global_position + direction * distance
+	var tween := create_tween()
+	tween.tween_property(self, "global_position", target, 0.4).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+func _play_jump() -> void:
+	var original_y := global_position.y
+	var tween := create_tween()
+	tween.tween_property(self, "global_position:y", original_y + 0.3, 0.2)
+	tween.tween_property(self, "global_position:y", original_y, 0.2)
+	tween.tween_property(self, "global_position:y", original_y + 0.2, 0.15)
+	tween.tween_property(self, "global_position:y", original_y, 0.15)
 
 
 func _on_inhabit(operator_session: String, mode: String) -> void:
