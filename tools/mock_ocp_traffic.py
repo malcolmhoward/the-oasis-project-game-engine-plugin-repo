@@ -147,22 +147,87 @@ def main():
         text = p.get("value", p.get("text", ""))
         if not text or p.get("device") == "echo-dawn-mock":
             return
-        r = "I'm not sure how to help with that."
+        r = "I'm not sure how to help with that. Try 'help' to see what I can do."
+        confused = True
+        ocp_command = None  # If set, also publish an OCP command to the avatar
         tl = text.lower()
-        if "hello" in tl or "hi" in tl:
-            r = "Hey! I'm the mock traffic publisher."
+        if "hello" in tl or "hi" in tl or "hey" in tl:
+            r = "Hey! I'm D.A.W.N. — Digital Assistant for Workflow Neural-inference. Try 'help' to see what I can do."
+            confused = False
+        elif "help" in tl or "what can you do" in tl or "commands" in tl:
+            r = ("I can respond to: 'hello', 'status', 'turn on/off', "
+                 "'who are you', 'peers', 'temperature', 'battery'. "
+                 "Movement: 'move up/down/left/right', 'turn left/right', 'jump'.")
+            confused = False
+        elif "who are you" in tl or "what are you" in tl:
+            r = ("I'm D.A.W.N. — the AI assistant for the O.A.S.I.S. ecosystem. "
+                 "Right now I'm running as a mock responder.")
+            confused = False
+        elif "peer" in tl or "online" in tl or "who else" in tl:
+            r = ("4 mock peers online: echo-aura-mock (sensors), echo-stat-mock "
+                 "(system metrics), echo-scope-mock (coordination), echo-dawn-mock (me).")
+            confused = False
+        elif "move forward" in tl or "go forward" in tl or "move up" in tl:
+            r = "Moving the avatar forward."
+            confused = False
+            ocp_command = {"action": "move_forward", "parameters": {"distance": 1.5}}
+        elif "move back" in tl or "go back" in tl or "move down" in tl:
+            r = "Moving the avatar backward."
+            confused = False
+            ocp_command = {"action": "move_back", "parameters": {"distance": 1.5}}
+        elif "move left" in tl or "go left" in tl:
+            r = "Moving the avatar left."
+            confused = False
+            ocp_command = {"action": "move_left", "parameters": {"distance": 1.5}}
+        elif "move right" in tl or "go right" in tl:
+            r = "Moving the avatar right."
+            confused = False
+            ocp_command = {"action": "move_right", "parameters": {"distance": 1.5}}
+        elif "turn left" in tl:
+            r = "Turning the avatar left."
+            confused = False
+            ocp_command = {"action": "turn_left", "parameters": {}}
+        elif "turn right" in tl:
+            r = "Turning the avatar right."
+            confused = False
+            ocp_command = {"action": "turn_right", "parameters": {}}
+        elif "jump" in tl:
+            r = "The avatar is jumping!"
+            confused = False
+            ocp_command = {"action": "jump", "parameters": {}}
         elif "turn on" in tl:
             r = "Done. Kitchen Lights is now on. (mock)"
+            confused = False
         elif "turn off" in tl:
             r = "Done. Kitchen Lights is now off. (mock)"
+            confused = False
+        elif "temperature" in tl or "temp" in tl or "weather" in tl:
+            r = "Current: 22.5°C, 65% humidity, air quality 85/100. (mock)"
+            confused = False
+        elif "battery" in tl or "power" in tl:
+            r = "Battery at 85%, 12.4V, discharging. (mock)"
+            confused = False
         elif "status" in tl:
             elapsed = _format_elapsed(time.time() - t0)
             r = (f"All mock peers online. {msg_count[0]} messages published "
                  f"over {elapsed}. D.A.W.N. responded {dawn_count[0]} times.")
+            confused = False
+        # Publish DAWN response
         c.publish("dawn", json.dumps({
             "device": "echo-dawn-mock", "action": "speak",
-            "value": r, "timestamp": int(time.time()),
+            "value": r, "confused": confused, "timestamp": int(time.time()),
         }))
+        # Publish OCP command to avatar if applicable
+        if ocp_command:
+            # Publish OCP command to the E3 avatar's command topic
+            # device must match the avatar's peer_id for OCPPeer to process it
+            c.publish("oasis/e3-avatar/command", json.dumps({
+                "device": "e3-avatar", "msg_type": "command",
+                "action": ocp_command["action"],
+                "parameters": ocp_command.get("parameters", {}),
+                "timestamp": int(time.time()),
+            }))
+            print(f"  [OCP] -> oasis/godot/command: {ocp_command['action']}")
         dawn_count[0] += 1
         print(f"  [DAWN] {text} -> {r}")
 
