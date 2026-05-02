@@ -71,6 +71,7 @@ func show_for_demo():
 	modulate.a = 0.0
 	var tween = create_tween()
 	tween.tween_property(self, "modulate:a", 1.0, 0.5)
+	_publish_expression("neutral", "demo_start")
 
 
 func enter_post_demo():
@@ -109,7 +110,7 @@ func restore_window():
 		DisplayServer.window_set_size(_original_window_size)
 		DisplayServer.window_set_position(_original_window_pos)
 		# Reset companion to its normal size and position
-		position = Vector2(1560, 680)  # Original position in presentation
+		position = Vector2(1560, 820)  # Original position in presentation
 		scale = Vector2.ONE
 		face_canvas.position = Vector2(10, 0)
 		face_canvas.size = Vector2(100, 80)
@@ -254,10 +255,15 @@ func _on_mqtt(topic: String, payload: String):
 	if _phase == Phase.HIDDEN:
 		return
 	var msg = JSON.parse_string(payload)
-	if msg is Dictionary and topic == "dawn":
+	if not msg is Dictionary:
+		return
+
+	# React to D.A.W.N. conversation
+	if topic == "dawn":
 		if msg.get("action") == "process_intent":
 			_expression = 2  # curious
 			_expression_timer = 0.0
+			_publish_expression("curious", "user_input")
 		elif msg.get("action") == "speak":
 			var text = str(msg.get("value", ""))
 			_speaking_duration = text.length() / 50.0
@@ -266,14 +272,57 @@ func _on_mqtt(topic: String, payload: String):
 				# Show confusion first, then speak after a beat
 				_expression = 2  # curious/confused (wide eyes, small O)
 				_expression_timer = 0.0
+				_publish_expression("confused", "unknown_input")
 				# Delay the speaking start
 				get_tree().create_timer(0.8).timeout.connect(func():
 					_is_speaking = true
 					_expression = 3  # speaking
+					_publish_expression("speaking", "dawn_response")
 				, CONNECT_ONE_SHOT)
 			else:
 				_is_speaking = true
 				_expression = 3  # speaking
+				_publish_expression("speaking", "dawn_response")
+
+	# React to avatar/game character commands — companion "watches" the action
+	if topic.ends_with("/command") and msg.get("msg_type") == "command":
+		var action = msg.get("action", "")
+		match action:
+			"move_forward", "move_back", "move_left", "move_right":
+				# Eyes track the movement direction
+				_expression = 2  # curious — eyes widen to follow
+				_expression_timer = 0.0
+				_publish_expression("tracking", "avatar_move")
+			"jump":
+				# Brief happy reaction
+				_expression = 1  # happy
+				_expression_timer = 0.0
+				_publish_expression("happy", "avatar_jump")
+			"navigate":
+				_expression = 2  # curious — watching where it goes
+				_expression_timer = 0.0
+				_publish_expression("curious", "avatar_navigate")
+
+	# React to avatar arrival
+	if msg.get("event") == "navigation_complete":
+		_expression = 1  # happy — it arrived!
+		_expression_timer = 0.0
+		_publish_expression("happy", "avatar_arrived")
+
+
+func _publish_expression(expression: String, trigger: String):
+	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
+	if oasis_mqtt:
+		var mqtt = oasis_mqtt.get_mqtt()
+		if mqtt:
+			mqtt.publish("oasis/companion/status", JSON.stringify({
+				"device": "companion",
+				"msg_type": "status",
+				"expression": expression,
+				"trigger": trigger,
+				"phase": Phase.keys()[_phase].to_lower(),
+				"timestamp": int(Time.get_unix_time_from_system()),
+			}))
 
 
 func _input(event: InputEvent):

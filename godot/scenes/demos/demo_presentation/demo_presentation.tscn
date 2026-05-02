@@ -70,9 +70,9 @@ visible = false
 z_index = 100
 layout_mode = 0
 offset_left = 1560
-offset_top = 680
+offset_top = 820
 offset_right = 1680
-offset_bottom = 820
+offset_bottom = 960
 script = ExtResource("3")
 persist_after_demo = true
 
