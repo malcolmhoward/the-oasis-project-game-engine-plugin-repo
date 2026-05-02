@@ -33,6 +33,19 @@ var _saved_slide: Control = null  # Preserved slide instance for Ctrl+D toggle
 
 
 func _ready():
+	# Command-line: --presentation=followup or --presentation=default
+	# Check both engine args and user args (after --)
+	var all_args = OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	for arg in all_args:
+		if arg.begins_with("--presentation="):
+			var pname = arg.get_slice("=", 1)
+			var candidate = "res://scratch/presentations/%s/presentation.json" % pname
+			if FileAccess.file_exists(candidate):
+				manifest_path = candidate
+				print("[Presentation] Using manifest: %s" % pname)
+			else:
+				push_warning("[Presentation] Manifest not found: %s" % candidate)
+
 	if manifest_path.is_empty():
 		# Try default locations
 		for path in [
@@ -159,6 +172,13 @@ func _show_slide(index: int, animate: bool):
 	# Update progress dots
 	_update_progress()
 
+	# Publish slide change as OCP event
+	_publish_presentation_event("slide_change", {
+		"slide_index": index + 1,
+		"slide_total": _slides.size(),
+		"cue": slide_data.get("cue", ""),
+	})
+
 
 func _execute_morph(transition_data: Dictionary):
 	# Delegate to MorphTransition engine
@@ -205,6 +225,8 @@ func _execute_morph(transition_data: Dictionary):
 	if companion and companion.has_method("show_for_demo"):
 		companion.show_for_demo()
 
+	_publish_presentation_event("demo_enter", {"mode": "morph_transition"})
+
 
 func _exit_demo_mode():
 	_demo_mode = false
@@ -217,6 +239,7 @@ func _exit_demo_mode():
 	# Companion stays visible — enters post-demo mode
 	if companion and companion.has_method("enter_post_demo"):
 		companion.enter_post_demo()
+	_publish_presentation_event("demo_exit", {"mode": "escape"})
 	# Show the slide at current index (already incremented during morph)
 	await get_tree().process_frame
 	if _current_index < _slides.size():
@@ -241,6 +264,7 @@ func _toggle_demo():
 		if speaking_cue and _current_index < _slides.size():
 			speaking_cue.text = _slides[_current_index].get("cue", "")
 		_update_progress()
+		_publish_presentation_event("demo_exit", {"mode": "ctrl_d"})
 	else:
 		# Enter/re-enter demo from any slide
 		# Find the demo transition if we haven't seen it yet
@@ -280,6 +304,7 @@ func _toggle_demo():
 			speaking_cue.text = "LIVE DEMO — Ctrl+D to return to slides"
 		if companion and companion.has_method("show_for_demo"):
 			companion.show_for_demo()
+		_publish_presentation_event("demo_enter", {"mode": "ctrl_d"})
 
 
 func _trigger_companion_reveal():
@@ -298,6 +323,7 @@ func _trigger_companion_reveal():
 	# Trigger the companion's reveal sequence
 	if companion and companion.has_method("trigger_reveal"):
 		companion.trigger_reveal()
+	_publish_presentation_event("companion_reveal", {})
 
 
 func _toggle_annotations():
@@ -375,3 +401,18 @@ func _load_manifest(path: String):
 	print("[Presentation] Loaded %d slides, %d appendix from %s" % [
 		_slides.size(), _appendix.size(), path
 	])
+
+
+func _publish_presentation_event(event: String, data: Dictionary):
+	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
+	if oasis_mqtt:
+		var mqtt = oasis_mqtt.get_mqtt()
+		if mqtt:
+			var msg = {
+				"device": "presentation",
+				"msg_type": "event",
+				"event": event,
+				"timestamp": int(Time.get_unix_time_from_system()),
+			}
+			msg.merge(data)
+			mqtt.publish("oasis/presentation/events", JSON.stringify(msg))
