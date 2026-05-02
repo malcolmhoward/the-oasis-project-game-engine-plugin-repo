@@ -1,0 +1,259 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://demos/mirage_hud/scripts/mirage_hud.gd" id="1"]
+
+[node name="MirageHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="CameraBackground" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+stretch_mode = 6
+
+[node name="HUDOverlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="CenterReticle" type="TextureRect" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.299
+anchor_top = 0.441
+anchor_right = 0.7
+anchor_bottom = 0.559
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CPUMEMPanel" type="TextureRect" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.644
+anchor_top = 0.535
+anchor_right = 0.97
+anchor_bottom = 0.629
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ClockBox" type="TextureRect" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.413
+anchor_top = 0.075
+anchor_right = 0.579
+anchor_bottom = 0.129
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PitchBox" type="TextureRect" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.114
+anchor_top = 0.483
+anchor_right = 0.165
+anchor_bottom = 0.514
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ArmorDisplay" type="TextureRect" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.049
+anchor_top = 0.625
+anchor_right = 0.361
+anchor_bottom = 0.937
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AIIcon" type="TextureRect" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.939
+anchor_top = 0.111
+anchor_right = 0.965
+anchor_bottom = 0.137
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TopBar" type="HBoxContainer" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 10
+offset_top = 8
+offset_right = -10
+offset_bottom = 30
+grow_horizontal = 2
+
+[node name="StatusDot" type="Label" parent="HUDOverlay/TopBar"]
+layout_mode = 2
+text = "●"
+
+[node name="MirageLabel" type="Label" parent="HUDOverlay/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "M.I.R.A.G.E."
+
+[node name="TimeLabel" type="Label" parent="HUDOverlay/TopBar"]
+layout_mode = 2
+text = "00:00:00"
+horizontal_alignment = 2
+
+[node name="CompassBar" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -30
+offset_top = 32
+offset_right = 30
+offset_bottom = 56
+grow_horizontal = 2
+horizontal_alignment = 1
+text = "N"
+
+[node name="AIName" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120
+offset_top = 68
+offset_right = -30
+offset_bottom = 90
+grow_horizontal = 0
+horizontal_alignment = 2
+text = "D.A.W.N."
+
+[node name="PitchValue" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchor_left = 0.128
+anchor_top = 0.49
+anchor_right = 0.2
+anchor_bottom = 0.52
+text = "0"
+
+[node name="StatPanelBG" type="PanelContainer" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160
+offset_top = 36
+offset_right = -8
+offset_bottom = 200
+grow_horizontal = 0
+
+[node name="StatPanel" type="VBoxContainer" parent="HUDOverlay/StatPanelBG"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="CPURow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/CPURow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "CPU"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/CPURow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "035%"
+horizontal_alignment = 2
+
+[node name="MEMRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/MEMRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "MEM"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/MEMRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "062%"
+horizontal_alignment = 2
+
+[node name="TEMPRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/TEMPRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "TEMP"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/TEMPRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "48 C"
+horizontal_alignment = 2
+
+[node name="FANRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/FANRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "FAN"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/FANRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "045%"
+horizontal_alignment = 2
+
+[node name="BATRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/BATRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "BAT"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/BATRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "85.0%"
+horizontal_alignment = 2
+
+[node name="Voltage" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/BATRow"]
+layout_mode = 2
+text = "12.40 V"
+horizontal_alignment = 2
+
+[node name="FPSCounter" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -90
+offset_top = 8
+offset_right = -8
+grow_horizontal = 0
+horizontal_alignment = 2
+text = "FPS: 60"
+
+[node name="AlertArea" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10
+offset_top = -30
+offset_right = 300
+grow_vertical = 0
+text = ""
+
+[node name="CamModeLabel" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10
+offset_top = -50
+offset_right = 200
+grow_vertical = 0
+text = "CAM: TEST PATTERN"
