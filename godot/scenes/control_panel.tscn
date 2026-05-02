@@ -1,0 +1,304 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/control_panel.gd" id="1"]
+
+[node name="ControlPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(220, 0)
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="DragBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="DragHandle" type="Label" parent="VBox/DragBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "≡ Providers"
+mouse_filter = 0
+
+[node name="CollapseBtn" type="Button" parent="VBox/DragBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(24, 0)
+text = "▼"
+
+[node name="Body" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ToggleAllRow" type="HBoxContainer" parent="VBox/Body"]
+layout_mode = 2
+
+[node name="ToggleAllStatus" type="Label" parent="VBox/Body/ToggleAllRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIMULATED"
+
+[node name="ToggleAllBtn" type="Button" parent="VBox/Body/ToggleAllRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(96, 0)
+text = "→ Simulated"
+
+[node name="Sep1" type="HSeparator" parent="VBox/Body"]
+layout_mode = 2
+
+[node name="StreamRow" type="HBoxContainer" parent="VBox/Body"]
+layout_mode = 2
+
+[node name="StreamLabel" type="Label" parent="VBox/Body/StreamRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "Stream"
+
+[node name="StreamStatus" type="Label" parent="VBox/Body/StreamRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● LIVE"
+
+[node name="StreamBtn" type="Button" parent="VBox/Body/StreamRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(68, 0)
+text = "Resume"
+
+[node name="MirageHeader" type="Button" parent="VBox/Body"]
+layout_mode = 2
+alignment = 0
+text = "▼ M.I.R.A.G.E."
+
+[node name="MirageSection" type="VBoxContainer" parent="VBox/Body"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="CameraRow" type="HBoxContainer" parent="VBox/Body/MirageSection"]
+layout_mode = 2
+
+[node name="CameraLabel" type="Label" parent="VBox/Body/MirageSection/CameraRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "Camera"
+
+[node name="CameraStatus" type="Label" parent="VBox/Body/MirageSection/CameraRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="CameraBtn" type="Button" parent="VBox/Body/MirageSection/CameraRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="AudioRow" type="HBoxContainer" parent="VBox/Body/MirageSection"]
+layout_mode = 2
+
+[node name="AudioLabel" type="Label" parent="VBox/Body/MirageSection/AudioRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "Audio"
+
+[node name="AudioStatus" type="Label" parent="VBox/Body/MirageSection/AudioRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="AudioBtn" type="Button" parent="VBox/Body/MirageSection/AudioRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="VolumeBar" type="ProgressBar" parent="VBox/Body/MirageSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="WaveformCanvas" type="Control" parent="VBox/Body/MirageSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 36)
+
+[node name="AuraHeader" type="Button" parent="VBox/Body"]
+layout_mode = 2
+alignment = 0
+text = "▼ A.U.R.A."
+
+[node name="AuraSection" type="VBoxContainer" parent="VBox/Body"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MotionRow" type="HBoxContainer" parent="VBox/Body/AuraSection"]
+layout_mode = 2
+
+[node name="MotionLabel" type="Label" parent="VBox/Body/AuraSection/MotionRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "Motion"
+
+[node name="MotionStatus" type="Label" parent="VBox/Body/AuraSection/MotionRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="MotionBtn" type="Button" parent="VBox/Body/AuraSection/MotionRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="GPSRow" type="HBoxContainer" parent="VBox/Body/AuraSection"]
+layout_mode = 2
+
+[node name="GPSLabel" type="Label" parent="VBox/Body/AuraSection/GPSRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "GPS"
+
+[node name="GPSStatus" type="Label" parent="VBox/Body/AuraSection/GPSRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="GPSBtn" type="Button" parent="VBox/Body/AuraSection/GPSRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="EnvironRow" type="HBoxContainer" parent="VBox/Body/AuraSection"]
+layout_mode = 2
+
+[node name="EnvironLabel" type="Label" parent="VBox/Body/AuraSection/EnvironRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "Environ"
+
+[node name="EnvironStatus" type="Label" parent="VBox/Body/AuraSection/EnvironRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="EnvironBtn" type="Button" parent="VBox/Body/AuraSection/EnvironRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="StatHeader" type="Button" parent="VBox/Body"]
+layout_mode = 2
+alignment = 0
+text = "▼ S.T.A.T."
+
+[node name="StatSection" type="VBoxContainer" parent="VBox/Body"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="SystemRow" type="HBoxContainer" parent="VBox/Body/StatSection"]
+layout_mode = 2
+
+[node name="SystemLabel" type="Label" parent="VBox/Body/StatSection/SystemRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "System"
+
+[node name="SystemStatus" type="Label" parent="VBox/Body/StatSection/SystemRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="SystemBtn" type="Button" parent="VBox/Body/StatSection/SystemRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="BatteryRow" type="HBoxContainer" parent="VBox/Body/StatSection"]
+layout_mode = 2
+
+[node name="BatteryLabel" type="Label" parent="VBox/Body/StatSection/BatteryRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "Battery"
+
+[node name="BatteryStatus" type="Label" parent="VBox/Body/StatSection/BatteryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="BatteryBtn" type="Button" parent="VBox/Body/StatSection/BatteryRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="DawnHeader" type="Button" parent="VBox/Body"]
+layout_mode = 2
+alignment = 0
+text = "▼ D.A.W.N."
+
+[node name="DawnSection" type="VBoxContainer" parent="VBox/Body"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="LLMRow" type="HBoxContainer" parent="VBox/Body/DawnSection"]
+layout_mode = 2
+
+[node name="LLMLabel" type="Label" parent="VBox/Body/DawnSection/LLMRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
+text = "LLM"
+
+[node name="LLMStatus" type="Label" parent="VBox/Body/DawnSection/LLMRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "● SIM"
+
+[node name="LLMBtn" type="Button" parent="VBox/Body/DawnSection/LLMRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(82, 0)
+text = "Disconnect"
+
+[node name="Sep2" type="HSeparator" parent="VBox/Body"]
+layout_mode = 2
+
+[node name="DPad" type="GridContainer" parent="VBox/Body"]
+layout_mode = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 3
+
+[node name="Spacer1" type="Control" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 0)
+
+[node name="BtnUp" type="Button" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 28)
+text = "↑"
+
+[node name="Spacer2" type="Control" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 0)
+
+[node name="BtnLeft" type="Button" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 28)
+text = "←"
+
+[node name="BtnJump" type="Button" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 28)
+text = "Jump"
+
+[node name="BtnRight" type="Button" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 28)
+text = "→"
+
+[node name="Spacer3" type="Control" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 0)
+
+[node name="BtnDown" type="Button" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 28)
+text = "↓"
+
+[node name="Spacer4" type="Control" parent="VBox/Body/DPad"]
+layout_mode = 2
+custom_minimum_size = Vector2(44, 0)
