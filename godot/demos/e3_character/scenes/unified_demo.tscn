@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" path="res://scenes/dawn_panel.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://demos/e3_character/scenes/game_scene.tscn" id="2"]
 [ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_demo_controller.gd" id="3"]
-[ext_resource type="PackedScene" path="res://scenes/audio_monitor.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/control_panel.tscn" id="5"]
 
 [node name="UnifiedDemo" type="Control"]
 layout_mode = 3
@@ -74,12 +74,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="AudioMonitor" parent="HSplitContainer/VSplitContainer/SubViewportContainer/GameOverlay" instance=ExtResource("5")]
+[node name="ControlPanel" parent="HSplitContainer/VSplitContainer/SubViewportContainer/GameOverlay" instance=ExtResource("5")]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -220
+offset_left = -210
 offset_top = 10
 offset_right = -10
 grow_horizontal = 0
