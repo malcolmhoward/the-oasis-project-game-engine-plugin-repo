@@ -1,7 +1,9 @@
-## Standalone D.A.W.N. conversation demo.
+## D.A.W.N. conversation demo with OCP message stream.
 ##
 ## Left panel: reusable dawn_panel.tscn instance (conversation UI).
 ## Right panel: OCP message stream showing raw MQTT traffic.
+## Stream pause/resume is controlled by the ControlPanel (if present)
+## or by a local toggle added to the stream header (standalone mode).
 ##
 ## Useful for testing D.A.W.N. communication without the 3D game scene.
 ## Works with E.C.H.O. mock LLM or real D.A.W.N. instance.
@@ -13,6 +15,7 @@ extends Control
 
 var _msg_count = 0
 var _stream_paused = false
+var _control_panel = null  # ControlPanel node if present (unified demo)
 
 
 func _ready():
@@ -20,7 +23,16 @@ func _ready():
 	if oasis_mqtt:
 		oasis_mqtt.global_message.connect(_on_global_message)
 
-	# Add stream status + toggle (matches Provider pattern visual language)
+	# Look for a ControlPanel in the scene (unified demo mode)
+	_control_panel = find_child("ControlPanel", true, false)
+	if _control_panel:
+		_control_panel.stream_toggled.connect(func(paused): _stream_paused = paused)
+	else:
+		# Standalone mode — add stream toggle directly to the stream header
+		_add_standalone_stream_toggle()
+
+
+func _add_standalone_stream_toggle():
 	var header = find_child("HBoxContainer", true, false)
 	if header:
 		var status_lbl = Label.new()
@@ -58,9 +70,11 @@ func _on_global_message(topic: String, payload: String):
 	if msg_count_label:
 		msg_count_label.text = "%d messages" % _msg_count
 
-	# When paused, filter out mock sensor flood but still show dawn messages
-	if _stream_paused and topic != "dawn":
-		return
+	# When paused, filter out sensor flood but keep commands, status, events, and dawn
+	if _stream_paused:
+		var dominated_keep = topic == "dawn" or topic.ends_with("/command") or topic.ends_with("/status") or topic.ends_with("/events")
+		if not dominated_keep:
+			return
 
 	if stream_log:
 		var time_dict = Time.get_time_dict_from_system()
