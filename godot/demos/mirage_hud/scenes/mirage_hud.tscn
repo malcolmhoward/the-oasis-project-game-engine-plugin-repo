@@ -292,8 +292,17 @@ size_flags_horizontal = 3
 text = "85.0%"
 horizontal_alignment = 2
 
-[node name="Voltage" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/BATRow"]
+[node name="VOLTRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
 layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/VOLTRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "VOLT"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/VOLTRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "12.40 V"
 horizontal_alignment = 2
 
