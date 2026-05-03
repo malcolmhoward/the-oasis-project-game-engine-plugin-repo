@@ -26,6 +26,7 @@ func _ready():
 	if _control_panel:
 		_control_panel.stream_toggled.connect(func(paused): _stream_paused = paused)
 		_control_panel.source_toggled.connect(_on_source_toggled)
+		_control_panel.source_mode_changed.connect(_on_source_mode_changed)
 
 	# Find MIRAGE HUD
 	_mirage_hud = find_child("MirageHUD", true, false)
@@ -35,11 +36,19 @@ func _on_source_toggled(source_name: String, live: bool):
 	if _mirage_hud == null:
 		return
 	match source_name:
-		"camera":
-			_mirage_hud.set_camera_live(live)
 		"system", "battery":
 			# Both system and battery control S.T.A.T. display
 			_mirage_hud.set_stat_live(live)
+		# Camera handled via source_mode_changed (multi-mode source)
+
+
+func _on_source_mode_changed(source_name: String, mode: String):
+	if _mirage_hud == null or source_name != "camera":
+		return
+	match mode:
+		"L0": _mirage_hud.set_camera_mode(_mirage_hud.CameraMode.L0_LOCAL)
+		"L2": _mirage_hud.set_camera_mode(_mirage_hud.CameraMode.L2_HOST)
+		"L3": _mirage_hud.set_camera_mode(_mirage_hud.CameraMode.L3_CONTAINER)
 
 
 func _on_global_message(topic: String, payload: String):
