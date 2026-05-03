@@ -15,7 +15,7 @@ const MH = preload("res://resources/mirage_design_tokens.gd")
 var _title_label: Label = null
 var _body_label: Label = null
 var _status_label: Label = null
-var _hide_timer: SceneTreeTimer = null
+var _active_tween: Tween = null
 
 
 func _ready() -> void:
@@ -79,8 +79,8 @@ func _on_message(topic: String, payload: String) -> void:
 	)
 
 
-## Display a notification card. Restarts the visible timer if a new
-## notification arrives while one is showing.
+## Display a notification card. If another notification is already on
+## screen, kill its tween so the two don't fight over modulate:a.
 func show_notification(category: String, title: String, status: String) -> void:
 	match category:
 		"incoming_call": _title_label.text = "INCOMING CALL"
@@ -92,12 +92,14 @@ func show_notification(category: String, title: String, status: String) -> void:
 	_body_label.text = title
 	_status_label.text = status
 
+	# Kill any in-flight fade so we don't run two tweens in parallel.
+	if _active_tween and _active_tween.is_valid():
+		_active_tween.kill()
 	visible = true
-	# Cancel a pending hide if one is queued.
-	if _hide_timer and _hide_timer.time_left > 0:
-		_hide_timer = null
-	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, fade_seconds)
-	tween.tween_interval(visible_seconds)
-	tween.tween_property(self, "modulate:a", 0.0, fade_seconds)
-	tween.tween_callback(func(): visible = false)
+	_active_tween = create_tween()
+	# Fade in from current alpha (0 on first show, mid-fade on overlap).
+	if modulate.a < 1.0:
+		_active_tween.tween_property(self, "modulate:a", 1.0, fade_seconds)
+	_active_tween.tween_interval(visible_seconds)
+	_active_tween.tween_property(self, "modulate:a", 0.0, fade_seconds)
+	_active_tween.tween_callback(func(): visible = false)

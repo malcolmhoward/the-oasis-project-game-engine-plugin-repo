@@ -270,11 +270,18 @@ def main():
         client.publish("stat", json.dumps(make_battery()))
         msg_count[0] += 5
 
-        # Loop the notification tape every 300s.
+        # Loop the notification tape every 300s. Publish at most one
+        # entry per tick: the next un-fired entry whose 'when' has been
+        # reached. last_notification_idx tracks the index of the most
+        # recently fired entry; reset on the loop boundary.
         loop_t = t % 300.0
-        for i, (when, payload) in enumerate(notification_tape):
-            if loop_t >= when and i != last_notification_idx:
-                last_notification_idx = i
+        if loop_t < 1.0 and last_notification_idx >= 0:
+            last_notification_idx = -1
+        next_idx = last_notification_idx + 1
+        if next_idx < len(notification_tape):
+            when, payload = notification_tape[next_idx]
+            if loop_t >= when:
+                last_notification_idx = next_idx
                 event = {
                     "device": "mirage", "msg_type": "event",
                     "event": "notification",
@@ -283,8 +290,6 @@ def main():
                 }
                 client.publish("mirage/events", json.dumps(event))
                 print(f"  [NOTIFY] {payload['category']}: {payload['caller_name']}")
-        if loop_t < notification_tape[0][0]:
-            last_notification_idx = -1
 
         if int(t) % 30 == 0 and int(t) != last_heartbeat:
             last_heartbeat = int(t)
