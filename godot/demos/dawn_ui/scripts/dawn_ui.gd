@@ -247,8 +247,15 @@ func _handle_dawn_event(payload: String) -> void:
 
 func _on_metrics_event(msg: Dictionary) -> void:
 	_last_metrics = msg
-	# TODO Phase 2: drive _telemetry_rings (TTFT, token rate, context %).
-	# Expected payload keys: ttft_ms, token_rate, context_percent.
+	if telemetry_rings == null:
+		return
+	# Pass -1.0 for any missing key so the ring keeps its prior value rather
+	# than dropping back into the no-data placeholder.
+	telemetry_rings.set_metrics(
+		float(msg.get("ttft_ms", -1.0)),
+		float(msg.get("token_rate", -1.0)),
+		float(msg.get("context_percent", -1.0))
+	)
 
 
 # ─── Phase 3 stubs (thinking, tool, plan blocks) ──────────────────────────

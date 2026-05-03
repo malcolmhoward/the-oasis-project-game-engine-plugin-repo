@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_ui.gd" id="1"]
+[ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_telemetry_rings.gd" id="2"]
 
 [node name="DawnUI" type="Control"]
 layout_mode = 3
@@ -56,8 +57,9 @@ theme_override_constants/separation = 8
 
 [node name="TelemetryRings" type="Control" parent="VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 64)
+custom_minimum_size = Vector2(0, 96)
 mouse_filter = 2
+script = ExtResource("2")
 
 [node name="InputRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2

@@ -212,6 +212,21 @@ def main():
             r = (f"All mock peers online. {msg_count[0]} messages published "
                  f"over {elapsed}. D.A.W.N. responded {dawn_count[0]} times.")
             confused = False
+        # Publish a dawn/events metrics_update payload that approximates the
+        # response cost so the Godot DAWN UI's telemetry rings show movement.
+        # TTFT scales loosely with response length; token rate stays in a
+        # plausible band; context grows slowly with each turn.
+        ttft_ms = max(80, 60 + len(r) * 1.2)
+        token_rate = round(28 + 12 * math.sin(time.time() * 0.3), 1)
+        ctx_pct = min(95.0, 8.0 + dawn_count[0] * 1.5)
+        c.publish("dawn/events", json.dumps({
+            "device": "dawn", "msg_type": "event",
+            "event": "metrics_update",
+            "ttft_ms": round(ttft_ms, 0),
+            "token_rate": token_rate,
+            "context_percent": round(ctx_pct, 1),
+            "timestamp": int(time.time() * 1000),
+        }))
         # Publish DAWN response
         c.publish("dawn", json.dumps({
             "device": "echo-dawn-mock", "action": "speak",
