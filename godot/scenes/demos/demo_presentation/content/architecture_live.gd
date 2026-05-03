@@ -292,7 +292,7 @@ func _on_dpad(btn_name: String):
 		_mqtt.publish("oasis/e3-avatar/command", JSON.stringify({
 			"device": "e3-avatar", "msg_type": "command",
 			"action": action, "parameters": params,
-			"timestamp": int(Time.get_unix_time_from_system()),
+			"timestamp": OCPMessage.now_ms(),
 		}))
 
 
