@@ -59,7 +59,11 @@ func _init() -> void:
 	_header_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_header_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_header_button.add_theme_color_override("font_color", ArcReactor.ACCENT_PURPLE)
-	_header_button.add_theme_font_size_override("font_size", ArcReactor.FONT_ROLE)
+	# Bumped from FONT_ROLE (10) to FONT_BODY (16) so the chevron + label
+	# read as obviously interactive. The hover style adds further emphasis.
+	_header_button.add_theme_font_size_override("font_size", ArcReactor.FONT_BODY)
+	_header_button.add_theme_color_override("font_hover_color", ArcReactor.ARC_CORE)
+	_header_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_header_button.pressed.connect(_toggle_expanded)
 	header.add_child(_header_button)
 
@@ -67,7 +71,7 @@ func _init() -> void:
 	_duration_label.name = "Duration"
 	_duration_label.text = ""
 	_duration_label.add_theme_color_override("font_color", ArcReactor.TEXT_TERTIARY)
-	_duration_label.add_theme_font_size_override("font_size", ArcReactor.FONT_ROLE)
+	_duration_label.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
 	header.add_child(_duration_label)
 
 	_body_scroll = ScrollContainer.new()
