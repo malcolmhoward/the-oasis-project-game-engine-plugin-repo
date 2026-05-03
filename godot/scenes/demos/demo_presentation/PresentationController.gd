@@ -412,7 +412,7 @@ func _publish_presentation_event(event: String, data: Dictionary):
 				"device": "presentation",
 				"msg_type": "event",
 				"event": event,
-				"timestamp": int(Time.get_unix_time_from_system()),
+				"timestamp": OCPMessage.now_ms(),
 			}
 			msg.merge(data)
 			mqtt.publish("oasis/presentation/events", JSON.stringify(msg))

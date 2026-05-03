@@ -468,7 +468,7 @@ func _publish_swap(provider: String, source: String, component: String):
 			"provider": provider,
 			"source": source,
 			"component": component,
-			"timestamp": int(Time.get_unix_time_from_system()),
+			"timestamp": OCPMessage.now_ms(),
 		}))
 
 
@@ -561,5 +561,5 @@ func _on_dpad(btn_name: String):
 			"msg_type": "command",
 			"action": action,
 			"parameters": params,
-			"timestamp": int(Time.get_unix_time_from_system()),
+			"timestamp": OCPMessage.now_ms(),
 		}))

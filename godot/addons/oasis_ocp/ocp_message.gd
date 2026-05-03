@@ -1,9 +1,16 @@
 ## OCP (O.A.S.I.S. Communications Protocol) message builder and parser.
 ##
-## Constructs and parses JSON messages conforming to the OCP v1.3 schema,
+## Constructs and parses JSON messages conforming to the OCP v1.4 schema,
 ## including the embodiment extension from ADR-0003 Amendment 5.
+##
+## v1.4 alignment: timestamps are Unix milliseconds (was seconds in v1.0/v1.3).
+## Use OCPMessage.now_ms() for any new timestamp value.
 class_name OCPMessage
 extends RefCounted
+
+## Returns the current time as Unix milliseconds (per OCP v1.4).
+static func now_ms() -> int:
+	return int(Time.get_unix_time_from_system() * 1000.0)
 
 # --- Embodiment Types (ADR-0003 Amendment 5) ---
 enum EmbodimentType { E1_PHYSICAL, E2_REMOTE, E3_DIGITAL, E4_SOFTWARE, E5_HYBRID }
@@ -43,7 +50,7 @@ static func build_status(
 		"device": device,
 		"msg_type": "status",
 		"status": status,
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": now_ms(),
 		"version": version,
 		"capabilities": Array(capabilities),
 	}
@@ -69,7 +76,7 @@ static func build_command(
 		"msg_type": "command",
 		"action": action,
 		"parameters": parameters,
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": now_ms(),
 	}
 
 
@@ -85,7 +92,7 @@ static func build_discovery(
 		"component": component,
 		"embodiment": embodiment,
 		"capabilities": Array(capabilities),
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": now_ms(),
 	}
 
 
@@ -99,7 +106,7 @@ static func build_inhabit_event(
 		"device": peer_id,
 		"msg_type": "event",
 		"event": "inhabit",
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": now_ms(),
 		"operator_session": operator_session,
 		"mode": mode,
 	}
@@ -111,7 +118,7 @@ static func build_release_event(peer_id: String) -> Dictionary:
 		"device": peer_id,
 		"msg_type": "event",
 		"event": "release",
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": now_ms(),
 	}
 
 
