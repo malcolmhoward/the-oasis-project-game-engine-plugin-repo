@@ -44,21 +44,21 @@ func _draw() -> void:
 	draw_line(Vector2(0, baseline_y), Vector2(w, baseline_y), line_color, 1.0)
 
 	# Determine the visible degree range based on width.
-	var deg_radius := (w * 0.5) / pixels_per_degree
+	var deg_radius: float = (w * 0.5) / pixels_per_degree
 
 	# Iterate from heading - radius to heading + radius in 1° steps and snap to
 	# minor_tick_step. This is the simplest robust approach and width-bounded.
-	var start_deg := heading_deg - deg_radius
-	var end_deg := heading_deg + deg_radius
+	var start_deg: float = heading_deg - deg_radius
+	var end_deg: float = heading_deg + deg_radius
 	# Snap start_deg up to the nearest minor_tick_step
-	var first_tick := ceil(start_deg / minor_tick_step) * minor_tick_step
+	var first_tick: float = ceil(start_deg / minor_tick_step) * minor_tick_step
 
-	var deg := first_tick
+	var deg: float = first_tick
 	while deg <= end_deg:
-		var screen_x := center_x + (deg - heading_deg) * pixels_per_degree
-		var normalized := fposmod(deg, 360.0)
-		var is_major := fmod(normalized, major_tick_step) < 0.01
-		var is_label := fmod(normalized, label_step) < 0.01
+		var screen_x: float = center_x + (deg - heading_deg) * pixels_per_degree
+		var normalized: float = fposmod(deg, 360.0)
+		var is_major: bool = fmod(normalized, major_tick_step) < 0.01
+		var is_label: bool = fmod(normalized, label_step) < 0.01
 
 		var tick_color := MH.PRIMARY_CYAN
 		var tick_h := 6.0
@@ -103,8 +103,7 @@ func _draw() -> void:
 
 func _heading_label(deg: float) -> String:
 	# Cardinal/ordinal substitutions at the 8 standard points; 3-digit otherwise.
-	var rounded := round(deg) as int
-	rounded = rounded % 360
+	var rounded: int = int(round(deg)) % 360
 	match rounded:
 		0:   return "N"
 		45:  return "NE"
