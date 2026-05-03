@@ -54,6 +54,9 @@ size_flags_vertical = 3
 bbcode_enabled = true
 text = ""
 scroll_following = true
+selection_enabled = true
+context_menu_enabled = true
+shortcut_keys_enabled = true
 
 [node name="FallbackInput" type="HBoxContainer" parent="HSplitContainer/LeftColumn/DAWNPanel/VBoxContainer"]
 layout_mode = 2
@@ -124,6 +127,9 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
 scroll_following = true
+selection_enabled = true
+context_menu_enabled = true
+shortcut_keys_enabled = true
 
 [node name="RightColumn" type="VBoxContainer" parent="HSplitContainer"]
 layout_mode = 2
