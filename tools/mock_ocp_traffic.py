@@ -245,8 +245,22 @@ def main():
     signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
 
+    # Notification scenario tape (seconds offset from start, payload).
+    # Replays once on a 5-minute loop so the toast visibly fires during demos.
+    notification_tape = [
+        (45.0, {"category": "incoming_call", "caller_name": "Pepper Potts",
+                "status": "Mobile - 555-0142"}),
+        (52.0, {"category": "call_active", "caller_name": "Pepper Potts",
+                "status": "Connected - 00:07"}),
+        (62.0, {"category": "call_ended", "caller_name": "Pepper Potts",
+                "status": "Duration 00:17"}),
+        (95.0, {"category": "sms_received", "caller_name": "Rhodey",
+                "status": "ETA 20 minutes."}),
+    ]
+
     t0 = time.time()
     last_heartbeat = 0
+    last_notification_idx = -1
     while True:
         t = time.time() - t0
         client.publish("aura", json.dumps(make_motion(t, phase)))
@@ -255,6 +269,23 @@ def main():
         client.publish("stat", json.dumps(make_system_metrics(t)))
         client.publish("stat", json.dumps(make_battery()))
         msg_count[0] += 5
+
+        # Loop the notification tape every 300s.
+        loop_t = t % 300.0
+        for i, (when, payload) in enumerate(notification_tape):
+            if loop_t >= when and i != last_notification_idx:
+                last_notification_idx = i
+                event = {
+                    "device": "mirage", "msg_type": "event",
+                    "event": "notification",
+                    "timestamp": int(time.time() * 1000),
+                    **payload,
+                }
+                client.publish("mirage/events", json.dumps(event))
+                print(f"  [NOTIFY] {payload['category']}: {payload['caller_name']}")
+        if loop_t < notification_tape[0][0]:
+            last_notification_idx = -1
+
         if int(t) % 30 == 0 and int(t) != last_heartbeat:
             last_heartbeat = int(t)
             for comp, pid, caps in peers:
