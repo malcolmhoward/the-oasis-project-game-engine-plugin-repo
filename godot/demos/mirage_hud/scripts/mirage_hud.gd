@@ -95,7 +95,7 @@ const FFMPEG_STALE_TIMEOUT := 3.0   # Restart ffmpeg if no new frame for 3 secon
 @onready var aqi_value: Label = $HUDOverlay/StatPanelBG/StatPanel/AQIRow/Value
 @onready var co2_value: Label = $HUDOverlay/StatPanelBG/StatPanel/CO2Row/Value
 @onready var bat_value: Label = $HUDOverlay/StatPanelBG/StatPanel/BATRow/Value
-@onready var bat_volt: Label = $HUDOverlay/StatPanelBG/StatPanel/BATRow/Voltage
+@onready var bat_volt: Label = $HUDOverlay/StatPanelBG/StatPanel/VOLTRow/Value
 @onready var fps_label: Label = $HUDOverlay/FPSCounter
 @onready var alert_label: Label = $HUDOverlay/AlertArea
 
@@ -646,7 +646,7 @@ func _style_hud():
 	if stat_panel_bg:
 		stat_panel_bg.add_theme_stylebox_override("panel", stat_bg)
 
-	for row_name in ["CPURow", "MEMRow", "TEMPRow", "FANRow", "HUMRow", "AQIRow", "CO2Row", "BATRow"]:
+	for row_name in ["CPURow", "MEMRow", "TEMPRow", "FANRow", "HUMRow", "AQIRow", "CO2Row", "BATRow", "VOLTRow"]:
 		var row = stat_panel.get_node_or_null(row_name)
 		if row:
 			var label_node = row.get_node_or_null("Label")
@@ -661,12 +661,8 @@ func _style_hud():
 				value_node.add_theme_color_override("font_color", MH.DATA_WHITE)
 				if label_font:
 					value_node.add_theme_font_override("font", label_font)
-	# Battery voltage sub-label
-	if bat_volt:
-		bat_volt.add_theme_font_size_override("font_size", MH.FONT_LOG)
-		bat_volt.add_theme_color_override("font_color", MH.SUBDUED_GRAY)
-		if label_font:
-			bat_volt.add_theme_font_override("font", label_font)
+	# Battery voltage now lives in its own VOLTRow and is styled by the
+	# unified loop above — no special-case styling needed.
 
 	# FPS — devgothic, primary cyan
 	fps_label.add_theme_font_size_override("font_size", MH.FONT_METRIC)
