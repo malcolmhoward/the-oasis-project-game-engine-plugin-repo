@@ -28,15 +28,23 @@ enum State { DISCONNECTED, CONNECTING, AWAITING_CONNACK, CONNECTED, CLOSING }
 @export var reconnect_delay_sec: float = 3.0
 
 # --- Last Will and Testament (MQTT v3.1.1 §3.1.2.5) ---
-# Set before connect_to_broker(); the broker publishes the will payload
-# to will_topic if this client disconnects ungracefully.
+# LWT is a standard MQTT feature, not OCP-specific: the broker publishes
+# the will payload to will_topic if this client disconnects ungracefully
+# (TCP drop, crash, no PINGREQ within keep-alive). Configured in the
+# CONNECT packet's variable header (will flag bit) and payload
+# (will topic + will message). Spec:
+# https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718031
 var will_topic: String = ""
 var will_payload: String = ""
 var will_qos: int = 0
 var will_retain: bool = false
 
 
-## Configure the Last Will and Testament. Must be called BEFORE connect_to_broker().
+## Configure the Last Will and Testament. MUST be called BEFORE
+## connect_to_broker() — the will is registered in the CONNECT packet
+## and cannot be changed without reconnecting. If called after the
+## bridge is already connected, the new will applies on the next
+## auto-reconnect.
 func set_will(topic: String, payload: String, retain: bool = true, qos: int = 0) -> void:
 	will_topic = topic
 	will_payload = payload

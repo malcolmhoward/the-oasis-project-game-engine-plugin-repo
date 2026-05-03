@@ -52,6 +52,14 @@ func _ready() -> void:
 	_mqtt.message_received.connect(_on_mqtt_message)
 
 
+## Configure the broker-published Last Will and Testament for this peer.
+##
+## LWT is a standard MQTT v3.1.1 mechanism (§3.1.2.5): the broker publishes
+## the will payload to <component>/status if this client disconnects
+## ungracefully. OCP convention sets timestamp=0 in LWT payloads so observers
+## can distinguish a broker-published LWT from a peer-published graceful
+## "offline" — every other OCP peer (S.T.A.T., M.I.R.A.G.E., simulation
+## framework) follows this same convention.
 func _set_lwt() -> void:
 	if _mqtt == null:
 		return
@@ -59,6 +67,7 @@ func _set_lwt() -> void:
 		peer_id, "offline", version, capabilities,
 		embodiment_type, simulated_capabilities, real_capabilities
 	)
+	will_msg["timestamp"] = 0  # OCP LWT convention — distinguishes broker-published LWT from graceful offline
 	_mqtt.set_will(
 		OCPMessage.status_topic(component_name),
 		OCPMessage.serialize(will_msg),
