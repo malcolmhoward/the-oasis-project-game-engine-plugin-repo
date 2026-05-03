@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://demos/mirage_hud/scripts/mirage_hud.gd" id="1"]
+[ext_resource type="Script" path="res://demos/mirage_hud/scripts/compass_strip.gd" id="2"]
 
 [node name="MirageHUD" type="Control"]
 layout_mode = 3
@@ -101,18 +102,44 @@ layout_mode = 2
 text = "00:00:00"
 horizontal_alignment = 2
 
+[node name="DateLabel" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -110
+offset_top = 32
+offset_right = -10
+offset_bottom = 50
+grow_horizontal = 0
+horizontal_alignment = 2
+text = "----.--.--"
+
 [node name="CompassBar" type="Label" parent="HUDOverlay"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -30
-offset_top = 32
-offset_right = 30
-offset_bottom = 56
+offset_left = -40
+offset_top = 80
+offset_right = 40
+offset_bottom = 104
 grow_horizontal = 2
 horizontal_alignment = 1
-text = "N"
+text = "N 000°"
+
+[node name="CompassStrip" type="Control" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400
+offset_top = 36
+offset_right = 400
+offset_bottom = 76
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("2")
 
 [node name="AIName" type="Label" parent="HUDOverlay"]
 layout_mode = 1
