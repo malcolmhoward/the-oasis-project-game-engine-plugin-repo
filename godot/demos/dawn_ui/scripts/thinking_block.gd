@@ -60,12 +60,12 @@ func _init() -> void:
 	_header_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_header_button.add_theme_color_override("font_color", ArcReactor.ACCENT_PURPLE)
 	# Bumped from FONT_ROLE (10) to FONT_BODY (16) so the chevron + label
-	# read as obviously interactive. Pointing-hand cursor on hover is the
-	# affordance — keep the text colour stable so it doesn't vanish on
-	# hover (an earlier ARC_CORE override interacted oddly with the flat
-	# button style and made the label disappear).
+	# read as obviously interactive. Hover lifts to TEXT_PRIMARY (near-
+	# white) — high contrast against any background, no risk of blending
+	# into the panel tint the way ARC_CORE did. Pressed/focus pinned to
+	# ACCENT_PURPLE so the resting state is stable.
 	_header_button.add_theme_font_size_override("font_size", ArcReactor.FONT_BODY)
-	_header_button.add_theme_color_override("font_hover_color", ArcReactor.ACCENT_PURPLE)
+	_header_button.add_theme_color_override("font_hover_color", ArcReactor.TEXT_PRIMARY)
 	_header_button.add_theme_color_override("font_pressed_color", ArcReactor.ACCENT_PURPLE)
 	_header_button.add_theme_color_override("font_focus_color", ArcReactor.ACCENT_PURPLE)
 	_header_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
