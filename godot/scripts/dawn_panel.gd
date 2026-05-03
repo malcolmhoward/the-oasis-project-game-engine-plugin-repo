@@ -60,7 +60,7 @@ func _on_send_text(text: String):
 			"device": "godot-dawn-panel",
 			"action": "process_intent",
 			"value": text,
-			"timestamp": int(Time.get_unix_time_from_system()),
+			"timestamp": OCPMessage.now_ms(),
 		}))
 	user_message_sent.emit(text)
 	input_field.clear()

@@ -163,7 +163,7 @@ func _publish_virtual_sensors() -> void:
 		"z": global_position.z,
 		"heading": rad_to_deg(rotation.y),
 		"is_navigating": _is_navigating,
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": OCPMessage.now_ms(),
 	}
 	ocp_peer._mqtt.publish(
 		"oasis/%s/sensors/position" % ocp_peer.component_name,
@@ -179,7 +179,7 @@ func _publish_arrival() -> void:
 		"msg_type": "event",
 		"event": "navigation_complete",
 		"position": {"x": global_position.x, "y": global_position.y, "z": global_position.z},
-		"timestamp": int(Time.get_unix_time_from_system()),
+		"timestamp": OCPMessage.now_ms(),
 	}
 	ocp_peer._mqtt.publish(
 		"oasis/%s" % ocp_peer.peer_id,

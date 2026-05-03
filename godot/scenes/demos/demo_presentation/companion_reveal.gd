@@ -321,7 +321,7 @@ func _publish_expression(expression: String, trigger: String):
 				"expression": expression,
 				"trigger": trigger,
 				"phase": Phase.keys()[_phase].to_lower(),
-				"timestamp": int(Time.get_unix_time_from_system()),
+				"timestamp": OCPMessage.now_ms(),
 			}))
 
 

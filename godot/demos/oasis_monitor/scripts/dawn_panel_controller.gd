@@ -67,7 +67,7 @@ func _on_fallback_text_submitted(text: String) -> void:
 			"msg_type": "command",
 			"action": "process_intent",
 			"parameters": {"text": text},
-			"timestamp": int(Time.get_unix_time_from_system()),
+			"timestamp": OCPMessage.now_ms(),
 		}
 		_mqtt.publish("oasis/dawn/input", JSON.stringify(msg))
 	if fallback_input:

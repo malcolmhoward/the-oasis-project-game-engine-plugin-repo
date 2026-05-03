@@ -118,18 +118,18 @@ def main():
             for component, peer_id, caps in peers:
                 c.publish(f"{component}/status", json.dumps({
                     "device": component, "msg_type": "status", "status": "online",
-                    "timestamp": int(time.time()), "version": "0.1.0-mock",
+                    "timestamp": int(time.time() * 1000), "version": "0.1.0-mock",
                     "capabilities": caps,
                 }), qos=1, retain=True)
                 c.publish(f"oasis/{peer_id}/status", json.dumps({
                     "peer_id": peer_id, "component": component,
                     "embodiment": "software", "status": "online",
-                    "timestamp": int(time.time()),
+                    "timestamp": int(time.time() * 1000),
                 }), qos=1, retain=True)
                 c.publish("echo/discovery/simulates", json.dumps({
                     "peer_id": peer_id, "component": component,
                     "embodiment": "software", "capabilities": caps,
-                    "timestamp": int(time.time()),
+                    "timestamp": int(time.time() * 1000),
                 }), qos=1, retain=True)
         else:
             print(f"  [MQTT] Connection refused: {rc}")
@@ -215,7 +215,7 @@ def main():
         # Publish DAWN response
         c.publish("dawn", json.dumps({
             "device": "echo-dawn-mock", "action": "speak",
-            "value": r, "confused": confused, "timestamp": int(time.time()),
+            "value": r, "confused": confused, "timestamp": int(time.time() * 1000),
         }))
         # Publish OCP command to avatar if applicable
         if ocp_command:
@@ -225,7 +225,7 @@ def main():
                 "device": "e3-avatar", "msg_type": "command",
                 "action": ocp_command["action"],
                 "parameters": ocp_command.get("parameters", {}),
-                "timestamp": int(time.time()),
+                "timestamp": int(time.time() * 1000),
             }))
             print(f"  [OCP] -> oasis/godot/command: {ocp_command['action']}")
         dawn_count[0] += 1
@@ -261,7 +261,7 @@ def main():
             for comp, pid, caps in peers:
                 client.publish(f"{comp}/status", json.dumps({
                     "device": comp, "msg_type": "status", "status": "online",
-                    "timestamp": int(time.time()), "version": "0.1.0-mock",
+                    "timestamp": int(time.time() * 1000), "version": "0.1.0-mock",
                     "capabilities": caps,
                 }), qos=1, retain=True)
             elapsed = _format_elapsed(t)
