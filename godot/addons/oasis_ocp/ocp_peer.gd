@@ -41,11 +41,29 @@ func _ready() -> void:
 	if _mqtt == null:
 		push_warning("OCPPeer '%s': No MQTTBridge found. Peer will not connect." % peer_id)
 		return
+	# Configure Last Will so the broker publishes "offline" if this client
+	# disconnects ungracefully. Only takes effect on the next CONNECT —
+	# already-open connections keep their original (or no) will.
+	_set_lwt()
 	# Wait for connection before announcing
 	if _mqtt.get_connection_state() == MQTTBridge.State.CONNECTED:
 		_announce()
 	_mqtt.connected.connect(_on_mqtt_connected)
 	_mqtt.message_received.connect(_on_mqtt_message)
+
+
+func _set_lwt() -> void:
+	if _mqtt == null:
+		return
+	var will_msg := OCPMessage.build_status(
+		peer_id, "offline", version, capabilities,
+		embodiment_type, simulated_capabilities, real_capabilities
+	)
+	_mqtt.set_will(
+		OCPMessage.status_topic(component_name),
+		OCPMessage.serialize(will_msg),
+		true  # Retain — last-known-state for new subscribers
+	)
 
 
 func _process(delta: float) -> void:
