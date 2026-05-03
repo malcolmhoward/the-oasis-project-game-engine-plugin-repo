@@ -56,28 +56,25 @@ theme_override_constants/separation = 8
 
 [node name="TelemetryRings" type="Control" parent="VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 64)
 mouse_filter = 2
 script = ExtResource("2")
 
 [node name="RingsSpacer" type="Control" parent="VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 16)
+custom_minimum_size = Vector2(0, 12)
 mouse_filter = 2
 
 [node name="InputRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 40)
-size_flags_vertical = 8
+custom_minimum_size = Vector2(0, 36)
 theme_override_constants/separation = 8
 
 [node name="InputField" type="LineEdit" parent="VBox/InputRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 4
 placeholder_text = "Ask D.A.W.N..."
 
 [node name="SendButton" type="Button" parent="VBox/InputRow"]
 layout_mode = 2
-size_flags_vertical = 4
 text = "Send"
