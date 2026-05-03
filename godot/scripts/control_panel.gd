@@ -18,6 +18,12 @@ const PT = preload("res://resources/presentation_theme.gd")
 
 signal stream_toggled(paused: bool)
 signal source_toggled(source_name: String, live: bool)
+## Emitted alongside source_toggled when a source supports multi-mode selection
+## (currently only camera: "L0", "L2", "L3"). Other sources emit "L0"/"L2".
+signal source_mode_changed(source_name: String, mode: String)
+
+# Sources that cycle through L0 → L2 → L3 instead of binary SIM/LIVE.
+const MULTI_MODE_SOURCES := {"camera": ["L0", "L2", "L3"]}
 
 # --- Source definitions ---
 # Each source: component, simulated OCP label, live OCP label
@@ -57,6 +63,7 @@ const ROW_NODES := {
 
 # --- Runtime state ---
 var _source_live: Dictionary = {}  # source_name -> bool
+var _source_mode: Dictionary = {}  # source_name -> "L0"|"L2"|"L3" (multi-mode sources only)
 var _stream_live: bool = true
 var _mqtt: MQTTBridge = null
 
@@ -91,6 +98,8 @@ func _ready():
 	# Initialize all sources to simulated
 	for source_name in SOURCE_DEFS:
 		_source_live[source_name] = false
+		if MULTI_MODE_SOURCES.has(source_name):
+			_source_mode[source_name] = "L0"
 
 	_style_panel()
 	_setup_drag_bar()
@@ -322,7 +331,11 @@ func _on_toggle_all():
 	var target = not all_live
 	_set_stream(target)
 	for source_name in SOURCE_DEFS:
-		_set_source(source_name, target)
+		if MULTI_MODE_SOURCES.has(source_name):
+			# Toggle-all maps to L0/L2 for multi-mode sources (L3 stays manual).
+			_set_source_mode(source_name, "L2" if target else "L0")
+		else:
+			_set_source(source_name, target)
 	_update_all_ui()
 
 
@@ -397,11 +410,24 @@ func _update_stream_ui():
 # --- Generic source toggle ---
 
 func _on_source_toggle(source_name: String):
-	_set_source(source_name, not _source_live[source_name])
+	if MULTI_MODE_SOURCES.has(source_name):
+		# Cycle L0 → L2 → L3 → L0
+		var modes: Array = MULTI_MODE_SOURCES[source_name]
+		var current: String = _source_mode.get(source_name, "L0")
+		var idx := modes.find(current)
+		var next_mode: String = modes[(idx + 1) % modes.size()]
+		_set_source_mode(source_name, next_mode)
+	else:
+		_set_source(source_name, not _source_live[source_name])
 	_update_all_ui()
 
 
 func _set_source(source_name: String, live: bool):
+	# Multi-mode sources go through _set_source_mode so the cycle state stays consistent.
+	if MULTI_MODE_SOURCES.has(source_name):
+		_set_source_mode(source_name, "L2" if live else "L0")
+		return
+
 	_source_live[source_name] = live
 
 	# Audio has special hardware handling
@@ -417,10 +443,48 @@ func _set_source(source_name: String, live: bool):
 	source_toggled.emit(source_name, live)
 
 
+## Switch a multi-mode source to a specific mode ("L0"/"L2"/"L3").
+func _set_source_mode(source_name: String, mode: String):
+	_source_mode[source_name] = mode
+	var live: bool = mode != "L0"
+	_source_live[source_name] = live
+	_update_source_ui(source_name)
+	var def = SOURCE_DEFS[source_name]
+	# Map mode to OCP swap label (L3 publishes a distinct "container" source name).
+	var source_label: String
+	match mode:
+		"L0": source_label = def["sim"]
+		"L2": source_label = def["live"]
+		"L3": source_label = "container"
+		_:    source_label = def["sim"]
+	_publish_swap(source_name, source_label, def["component"])
+	source_toggled.emit(source_name, live)
+	source_mode_changed.emit(source_name, mode)
+
+
 func _update_source_ui(source_name: String):
-	var live = _source_live[source_name]
 	var status_lbl = _status_labels.get(source_name)
 	var btn = _toggle_btns.get(source_name)
+	if MULTI_MODE_SOURCES.has(source_name):
+		var mode: String = _source_mode.get(source_name, "L0")
+		if status_lbl:
+			match mode:
+				"L0":
+					status_lbl.text = "● L0 SIM"
+					status_lbl.add_theme_color_override("font_color", PT.COLOR_SIM)
+				"L2":
+					status_lbl.text = "● L2 HOST"
+					status_lbl.add_theme_color_override("font_color", PT.COLOR_LIVE)
+				"L3":
+					status_lbl.text = "● L3 CONTAINER"
+					status_lbl.add_theme_color_override("font_color", PT.COLOR_ACCENT)
+		if btn:
+			match mode:
+				"L0": btn.text = "→ Host"
+				"L2": btn.text = "→ Container"
+				"L3": btn.text = "→ Local"
+		return
+	var live = _source_live[source_name]
 	if status_lbl:
 		if live:
 			status_lbl.text = "● LIVE"

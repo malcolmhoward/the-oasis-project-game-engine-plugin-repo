@@ -10,8 +10,26 @@ extends Control
 
 const MH = preload("res://resources/mirage_design_tokens.gd")
 
-var _camera_live: bool = false
+# Multi-level simulation model (followup deck slide_02):
+#   L0_LOCAL      — Test pattern, fully in-process
+#   L2_HOST       — Real USB camera on host (DirectShow / V4L2)
+#   L3_CONTAINER  — Captured frames from a running M.I.R.A.G.E. container
+enum CameraMode { L0_LOCAL, L2_HOST, L3_CONTAINER }
+
+var _camera_mode: CameraMode = CameraMode.L0_LOCAL
+var _camera_live: bool = false  # Convenience: true when mode != L0_LOCAL
 var _stat_live: bool = false
+
+## ffmpeg input args for L3 — captures the M.I.R.A.G.E. container's surface.
+## Default targets a host window titled "MIRAGE" via gdigrab on Windows.
+## Override per platform: x11grab `:0.0` on Linux, avfoundation index on macOS,
+## or RTMP `rtmp://localhost:1935/live/mirage` once the upstream RTMP-URL
+## patch lands (see followup deck slide_04_l3_options).
+@export var l3_ffmpeg_input_args: PackedStringArray = PackedStringArray([
+	"-f", "gdigrab",
+	"-framerate", "10",
+	"-i", "title=MIRAGE"
+])
 
 # Simulated metric state
 var _sim_phase: float = 0.0
@@ -239,12 +257,22 @@ func _heading_to_cardinal(degrees: float) -> String:
 
 # --- Camera Provider ---
 
+## Back-compat shim — maps boolean toggle to L0_LOCAL / L2_HOST.
+## New code should call set_camera_mode() directly.
 func set_camera_live(live: bool):
-	_camera_live = live
-	if live:
-		_activate_camera()
-	else:
+	set_camera_mode(CameraMode.L2_HOST if live else CameraMode.L0_LOCAL)
+
+
+## Set camera mode explicitly. L0 disables capture, L2 uses host USB,
+## L3 captures the M.I.R.A.G.E. container's surface via ffmpeg.
+func set_camera_mode(mode: CameraMode):
+	if mode == _camera_mode and _camera_live == (mode != CameraMode.L0_LOCAL):
+		return
+	_camera_mode = mode
+	if mode == CameraMode.L0_LOCAL:
 		_stop_camera()
+	else:
+		_activate_camera()
 
 
 func _stop_camera():
@@ -261,7 +289,18 @@ func _stop_camera():
 
 
 func _activate_camera():
-	# Try CameraServer first
+	# L3 always uses ffmpeg with the container-capture command — never CameraServer.
+	if _camera_mode == CameraMode.L3_CONTAINER:
+		_ffmpeg_path = _find_ffmpeg()
+		if _ffmpeg_path.is_empty():
+			_camera_live = true
+			cam_mode_label.text = "CAM: L3 — ffmpeg not found"
+			cam_mode_label.add_theme_color_override("font_color", MH.ALERT_RED)
+			return
+		_start_ffmpeg()
+		return
+
+	# L2 — try CameraServer first, then fall back to ffmpeg with USB device input.
 	var feed_count = CameraServer.get_feed_count()
 	print("[MirageHUD] CameraServer feeds: %d" % feed_count)
 	if feed_count > 0:
@@ -273,7 +312,6 @@ func _activate_camera():
 		cam_mode_label.add_theme_color_override("font_color", MH.PRIMARY_CYAN)
 		return
 
-	# Try ffmpeg as fallback
 	_ffmpeg_path = _find_ffmpeg()
 	if not _ffmpeg_path.is_empty():
 		_start_ffmpeg()
@@ -319,12 +357,19 @@ func _find_ffmpeg() -> String:
 
 func _start_ffmpeg():
 	_ffmpeg_output_path = OS.get_user_data_dir() + "/mirage_cam_frame.jpg"
-	# Start ffmpeg capturing from the first DirectShow video device, overwriting a single JPEG
-	# -update 1: overwrite the same file with each new frame
-	var args = [
-		"-f", "dshow",
-		"-i", "video=HD Pro Webcam C920",
-		"-r", str(FFMPEG_FPS),
+	# Build input args based on current mode. -update 1 overwrites the same JPEG.
+	var input_args: Array
+	var mode_label: String
+	var mode_color: Color
+	if _camera_mode == CameraMode.L3_CONTAINER:
+		input_args = Array(l3_ffmpeg_input_args)
+		mode_label = "CAM: L3 — M.I.R.A.G.E. Container"
+		mode_color = MH.ARMOR_ONLINE
+	else:
+		input_args = ["-f", "dshow", "-i", "video=HD Pro Webcam C920", "-r", str(FFMPEG_FPS)]
+		mode_label = "CAM: L2 — Real Source (host USB)"
+		mode_color = MH.PRIMARY_CYAN
+	var args := input_args + [
 		"-s", "640x480",
 		"-q:v", "5",
 		"-update", "1",
@@ -336,17 +381,23 @@ func _start_ffmpeg():
 	_ffmpeg_last_size = 0
 	if _ffmpeg_pid > 0:
 		_camera_live = true
-		cam_mode_label.text = "CAM: L2 — Real Source (host USB)"
-		cam_mode_label.add_theme_color_override("font_color", MH.PRIMARY_CYAN)
+		cam_mode_label.text = mode_label
+		cam_mode_label.add_theme_color_override("font_color", mode_color)
 		print("[MirageHUD] ffmpeg started, pid=%d" % _ffmpeg_pid)
 	else:
 		print("[MirageHUD] ffmpeg failed to start")
 		_camera_live = true
-		if _noise_frames.is_empty():
-			_generate_noise_frames()
-		camera_bg.texture = _noise_frames[0]
-		cam_mode_label.text = "CAM: L0 — Fully Local (noise fallback)"
-		cam_mode_label.add_theme_color_override("font_color", MH.PRIMARY_CYAN)
+		if _camera_mode == CameraMode.L3_CONTAINER:
+			# L3 with no source — show a clear disconnected state instead of fallback.
+			camera_bg.texture = _test_pattern
+			cam_mode_label.text = "CAM: L3 — M.I.R.A.G.E. source disconnected"
+			cam_mode_label.add_theme_color_override("font_color", MH.ALERT_RED)
+		else:
+			if _noise_frames.is_empty():
+				_generate_noise_frames()
+			camera_bg.texture = _noise_frames[0]
+			cam_mode_label.text = "CAM: L0 — Fully Local (noise fallback)"
+			cam_mode_label.add_theme_color_override("font_color", MH.PRIMARY_CYAN)
 
 
 func _stop_ffmpeg():
