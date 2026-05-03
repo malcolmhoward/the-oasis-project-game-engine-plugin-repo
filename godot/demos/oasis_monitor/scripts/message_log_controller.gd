@@ -8,11 +8,13 @@ extends PanelContainer
 @onready var log_text: RichTextLabel = $VBoxContainer/LogScroll/LogText
 @onready var auto_scroll_toggle: CheckButton = $VBoxContainer/Header/AutoScroll
 @onready var filter_button: OptionButton = $VBoxContainer/Header/Filter
+@onready var header: HBoxContainer = $VBoxContainer/Header
 
 var _max_lines: int = 200
 var _line_count: int = 0
 var _auto_scroll: bool = true
 var _filter_topic: String = ""  # Empty = show all
+var _copy_button: Button = null
 
 const TYPE_COLORS = {
 	"status": "#4488CC",
@@ -29,6 +31,9 @@ func _ready() -> void:
 		log_text.bbcode_enabled = true
 		log_text.scroll_following = true
 		log_text.text = ""
+		log_text.selection_enabled = true
+		log_text.context_menu_enabled = true
+		log_text.shortcut_keys_enabled = true
 
 	if auto_scroll_toggle:
 		auto_scroll_toggle.button_pressed = true
@@ -43,9 +48,30 @@ func _ready() -> void:
 		filter_button.add_item("*/events", 5)
 		filter_button.item_selected.connect(_on_filter_changed)
 
+	if header:
+		_copy_button = Button.new()
+		_copy_button.text = "Copy"
+		_copy_button.tooltip_text = "Copy entire message log to clipboard"
+		_copy_button.pressed.connect(_on_copy_log)
+		header.add_child(_copy_button)
+
 	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
 		oasis_mqtt.global_message.connect(_on_message)
+
+
+func _on_copy_log() -> void:
+	if log_text == null:
+		return
+	var raw := log_text.get_parsed_text()
+	if raw.is_empty():
+		raw = log_text.text
+	DisplayServer.clipboard_set(raw)
+	if _copy_button:
+		_copy_button.text = "Copied!"
+		await get_tree().create_timer(1.0).timeout
+		if is_instance_valid(_copy_button):
+			_copy_button.text = "Copy"
 
 
 func _on_message(topic: String, payload: String) -> void:
