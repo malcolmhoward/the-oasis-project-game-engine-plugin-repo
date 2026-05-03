@@ -1,0 +1,73 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_ui.gd" id="1"]
+
+[node name="DawnUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12
+offset_top = 12
+offset_right = -12
+offset_bottom = -12
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StatusDot" type="Label" parent="VBox/Header"]
+layout_mode = 2
+text = "●"
+
+[node name="StatusLabel" type="Label" parent="VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "D.A.W.N."
+
+[node name="ConnectionLabel" type="Label" parent="VBox/Header"]
+layout_mode = 2
+text = "WAITING"
+horizontal_alignment = 2
+
+[node name="TranscriptToolbar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="TranscriptScroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="TranscriptBox" type="VBoxContainer" parent="VBox/TranscriptScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="TelemetryRings" type="Control" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 64)
+mouse_filter = 2
+
+[node name="InputRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="InputField" type="LineEdit" parent="VBox/InputRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Ask D.A.W.N..."
+
+[node name="SendButton" type="Button" parent="VBox/InputRow"]
+layout_mode = 2
+text = "Send"
