@@ -68,15 +68,15 @@ func _on_send_text(text: String):
 
 
 func _on_mqtt_message(topic: String, payload: String):
-	# Track D.A.W.N. online status
-	if topic == "dawn/status" or topic.ends_with("/dawn/status"):
+	# Track D.A.W.N. online status (v1.4: dawn/status)
+	if topic == "dawn/status":
 		var msg = JSON.parse_string(payload)
 		if msg is Dictionary and msg.get("status") == "online":
 			_dawn_online = true
 			_update_status()
 
-	# Display D.A.W.N. responses
-	if topic == "dawn" or topic == "oasis/dawn/output":
+	# Display D.A.W.N. responses (v1.4: dawn topic)
+	if topic == "dawn":
 		var msg = JSON.parse_string(payload)
 		if msg is Dictionary:
 			var text = ""

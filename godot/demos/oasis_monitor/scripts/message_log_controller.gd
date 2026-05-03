@@ -36,10 +36,11 @@ func _ready() -> void:
 
 	if filter_button:
 		filter_button.add_item("All Topics", 0)
-		filter_button.add_item("oasis/dawn/*", 1)
-		filter_button.add_item("oasis/mirage/*", 2)
-		filter_button.add_item("oasis/*/status", 3)
-		filter_button.add_item("oasis/*/command", 4)
+		filter_button.add_item("dawn/*", 1)
+		filter_button.add_item("mirage/* | hud/*", 2)
+		filter_button.add_item("*/status", 3)
+		filter_button.add_item("*/cmd", 4)
+		filter_button.add_item("*/events", 5)
 		filter_button.item_selected.connect(_on_filter_changed)
 
 	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
@@ -89,16 +90,20 @@ func _on_message(topic: String, payload: String) -> void:
 func _on_filter_changed(index: int) -> void:
 	match index:
 		0: _filter_topic = ""
-		1: _filter_topic = "oasis/dawn/"
-		2: _filter_topic = "oasis/mirage/"
+		1: _filter_topic = "dawn"
+		2: _filter_topic = "mirage|hud"
 		3: _filter_topic = "/status"
-		4: _filter_topic = "/command"
+		4: _filter_topic = "/cmd"
+		5: _filter_topic = "/events"
 
 
 func _matches_filter(topic: String) -> bool:
 	if _filter_topic.begins_with("/"):
-		# Suffix match (e.g., "/status")
+		# Suffix match (e.g., "/status", "/cmd", "/events")
 		return topic.ends_with(_filter_topic)
-	else:
-		# Prefix match (e.g., "oasis/dawn/")
-		return topic.begins_with(_filter_topic)
+	# Prefix match — first slash-separated segment of the topic
+	var component := topic.split("/", true, 1)[0]
+	for prefix in _filter_topic.split("|"):
+		if component == prefix:
+			return true
+	return false

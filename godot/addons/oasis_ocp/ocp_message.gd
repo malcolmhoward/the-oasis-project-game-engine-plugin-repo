@@ -157,9 +157,33 @@ static func get_embodiment_type(msg: Dictionary) -> String:
 
 
 ## Construct the OCP topic for a given component and message type.
-## Examples: oasis/mirage/status, oasis/dawn/command, echo/discovery/simulates
+## v1.4 convention is `<component>/<suffix>` (no `oasis/` prefix).
+## Maps "command" -> "cmd", "event" -> "events" per v1.4 topic table.
+## Examples: hud/status, dawn/cmd, echo/events
 static func topic_for(component: String, msg_type: String) -> String:
-	return "oasis/%s/%s" % [component, msg_type]
+	# Translate plugin's internal vocabulary to v1.4 topic suffixes
+	var suffix := msg_type
+	match msg_type:
+		"command":
+			suffix = "cmd"
+		"event":
+			suffix = "events"
+	return "%s/%s" % [component, suffix]
+
+
+## v1.4 status topic for a component (e.g. mirage/status).
+static func status_topic(component: String) -> String:
+	return "%s/status" % component
+
+
+## v1.4 command topic for a component (e.g. dawn/cmd).
+static func cmd_topic(component: String) -> String:
+	return "%s/cmd" % component
+
+
+## v1.4 events topic for a component (e.g. echo/events).
+static func events_topic(component: String) -> String:
+	return "%s/events" % component
 
 
 ## Construct the discovery topic for simulated peers.

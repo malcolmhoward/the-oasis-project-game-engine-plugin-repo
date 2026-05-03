@@ -46,8 +46,9 @@ func _ready() -> void:
 
 func _on_connected() -> void:
 	print("[OasisMQTT] Connected to %s:%d" % [broker_host, broker_port])
-	# Subscribe to O.A.S.I.S. MQTT topics
-	mqtt.subscribe("oasis/#")       # OCP peer status (oasis/<peer_id>/status)
+	# v1.4 topic conventions: <component>/<suffix> (no oasis/ prefix)
+	mqtt.subscribe("+/status")      # All peer status messages
+	mqtt.subscribe("+/events")      # All peer event messages
 	mqtt.subscribe("echo/#")        # Simulation discovery (echo/discovery/simulates)
 	mqtt.subscribe("aura")          # A.U.R.A. sensor data (motion, GPS, environmental)
 	mqtt.subscribe("stat")          # S.T.A.T. system metrics and battery

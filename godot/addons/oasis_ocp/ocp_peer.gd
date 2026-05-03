@@ -85,7 +85,7 @@ func inhabit(operator_session: String, mode: String = "full_control") -> void:
 	inhabited_by = operator_session
 	if _mqtt:
 		var event := OCPMessage.build_inhabit_event(peer_id, operator_session, mode)
-		_mqtt.publish("oasis/%s" % peer_id, OCPMessage.serialize(event))
+		_mqtt.publish(OCPMessage.events_topic(peer_id), OCPMessage.serialize(event))
 
 
 ## Clear the inhabited_by field and publish a release event.
@@ -93,7 +93,7 @@ func release() -> void:
 	inhabited_by = ""
 	if _mqtt:
 		var event := OCPMessage.build_release_event(peer_id)
-		_mqtt.publish("oasis/%s" % peer_id, OCPMessage.serialize(event))
+		_mqtt.publish(OCPMessage.events_topic(peer_id), OCPMessage.serialize(event))
 
 
 # --- Internal ---
@@ -123,11 +123,11 @@ func _on_mqtt_connected() -> void:
 
 
 func _announce() -> void:
-	# Subscribe to this peer's command topic
-	_mqtt.subscribe(OCPMessage.topic_for(component_name, "command"))
-	_mqtt.subscribe("oasis/%s" % peer_id)
+	# v1.4 topic conventions: <component>/cmd, <peer_id>/events, +/status
+	_mqtt.subscribe(OCPMessage.cmd_topic(component_name))
+	_mqtt.subscribe(OCPMessage.events_topic(peer_id))
 	# Subscribe to all status for peer awareness
-	_mqtt.subscribe("oasis/+/status")
+	_mqtt.subscribe("+/status")
 	# Publish initial status
 	_publish_status("online")
 	# Publish discovery if simulating another peer
