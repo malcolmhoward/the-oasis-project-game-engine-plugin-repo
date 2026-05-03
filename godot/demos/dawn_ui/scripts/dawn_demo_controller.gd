@@ -72,7 +72,7 @@ func _on_global_message(topic: String, payload: String):
 
 	# When paused, filter out sensor flood but keep commands, status, events, and dawn
 	if _stream_paused:
-		var dominated_keep = topic == "dawn" or topic.ends_with("/command") or topic.ends_with("/status") or topic.ends_with("/events")
+		var dominated_keep = topic == "dawn" or topic.ends_with("/cmd") or topic.ends_with("/status") or topic.ends_with("/events")
 		if not dominated_keep:
 			return
 
