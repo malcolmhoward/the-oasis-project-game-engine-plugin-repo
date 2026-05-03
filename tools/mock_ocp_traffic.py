@@ -227,6 +227,41 @@ def main():
             "context_percent": round(ctx_pct, 1),
             "timestamp": int(time.time() * 1000),
         }))
+
+        # Phase 3 demo: emit a synthetic thinking trace before longer
+        # responses, so the Godot transcript shows a collapsible reasoning
+        # block. Skip on terse one-liners ("Hey!" greetings, etc.) to avoid
+        # padding every interaction.
+        if len(r) > 80 and not confused:
+            orch_id = "orch-%d" % dawn_count[0]
+            c.publish("dawn/events", json.dumps({
+                "device": "dawn", "msg_type": "event",
+                "event": "thinking_start",
+                "orchestrator_id": orch_id,
+                "provider": "claude",
+                "timestamp": int(time.time() * 1000),
+            }))
+            mock_thoughts = [
+                "Considering the request: %r" % text[:60],
+                " — checking which capability is the closest match.",
+                " — drafting a concise response that names the relevant peers.",
+                " — final answer ready.",
+            ]
+            for thought in mock_thoughts:
+                c.publish("dawn/events", json.dumps({
+                    "device": "dawn", "msg_type": "event",
+                    "event": "thinking_delta",
+                    "orchestrator_id": orch_id,
+                    "delta": thought,
+                    "timestamp": int(time.time() * 1000),
+                }))
+            c.publish("dawn/events", json.dumps({
+                "device": "dawn", "msg_type": "event",
+                "event": "thinking_end",
+                "orchestrator_id": orch_id,
+                "duration_ms": 420 + len(r) * 4,
+                "timestamp": int(time.time() * 1000),
+            }))
         # Publish DAWN response
         c.publish("dawn", json.dumps({
             "device": "echo-dawn-mock", "action": "speak",

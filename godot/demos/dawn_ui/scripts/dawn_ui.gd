@@ -11,6 +11,7 @@ extends Control
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
 const MessageBubble = preload("res://scripts/message_bubble.gd")
+const ThinkingBlockClass = preload("res://demos/dawn_ui/scripts/thinking_block.gd")
 
 @onready var status_dot: Label = $VBox/Header/StatusDot
 @onready var status_label: Label = $VBox/Header/StatusLabel
@@ -28,6 +29,9 @@ var _copy_button: Button = null
 var _clear_button: Button = null
 # Phase 2+ telemetry state (empty until dawn/events lands or schema is defined)
 var _last_metrics: Dictionary = {}
+# Phase 3 — active thinking blocks keyed by orchestrator_id so streaming
+# deltas land in the right block when several arrive interleaved.
+var _thinking_blocks: Dictionary = {}
 
 
 func _ready() -> void:
@@ -260,10 +264,27 @@ func _on_metrics_event(msg: Dictionary) -> void:
 
 # ─── Phase 3 stubs (thinking, tool, plan blocks) ──────────────────────────
 
-func _on_thinking_event(event: String, _msg: Dictionary) -> void:
-	# TODO Phase 3: collapsible BBCode block under the latest assistant bubble.
-	# event ∈ {thinking_start, thinking_delta, thinking_end}
-	pass
+func _on_thinking_event(event: String, msg: Dictionary) -> void:
+	var orch_id: String = str(msg.get("orchestrator_id", "default"))
+	match event:
+		"thinking_start":
+			# Spawn a new thinking block in the transcript and remember it.
+			var block: ThinkingBlockClass = ThinkingBlockClass.new()
+			if transcript_box:
+				transcript_box.add_child(block)
+			block.start(orch_id, str(msg.get("provider", "")))
+			_thinking_blocks[orch_id] = block
+			_scroll_to_bottom.call_deferred()
+		"thinking_delta":
+			var existing = _thinking_blocks.get(orch_id)
+			if existing and is_instance_valid(existing):
+				existing.append_delta(str(msg.get("delta", "")))
+				_scroll_to_bottom.call_deferred()
+		"thinking_end":
+			var ending = _thinking_blocks.get(orch_id)
+			if ending and is_instance_valid(ending):
+				ending.finish(int(msg.get("duration_ms", 0)))
+			_thinking_blocks.erase(orch_id)
 
 
 func _on_tool_event(event: String, _msg: Dictionary) -> void:
