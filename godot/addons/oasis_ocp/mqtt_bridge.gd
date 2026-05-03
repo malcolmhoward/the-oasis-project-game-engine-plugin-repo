@@ -27,6 +27,22 @@ enum State { DISCONNECTED, CONNECTING, AWAITING_CONNACK, CONNECTED, CLOSING }
 @export var auto_reconnect: bool = true
 @export var reconnect_delay_sec: float = 3.0
 
+# --- Last Will and Testament (MQTT v3.1.1 §3.1.2.5) ---
+# Set before connect_to_broker(); the broker publishes the will payload
+# to will_topic if this client disconnects ungracefully.
+var will_topic: String = ""
+var will_payload: String = ""
+var will_qos: int = 0
+var will_retain: bool = false
+
+
+## Configure the Last Will and Testament. Must be called BEFORE connect_to_broker().
+func set_will(topic: String, payload: String, retain: bool = true, qos: int = 0) -> void:
+	will_topic = topic
+	will_payload = payload
+	will_retain = retain
+	will_qos = clamp(qos, 0, 2)
+
 var _ws: WebSocketPeer = WebSocketPeer.new()
 var _state: State = State.DISCONNECTED
 var _broker_url: String = ""
@@ -132,13 +148,27 @@ func _send_connect() -> void:
 	var_header.append_array(_encode_utf8_string("MQTT"))
 	# Protocol Level (4 = v3.1.1)
 	var_header.append(4)
-	# Connect Flags: Clean Session
-	var_header.append(0x02)
+	# Connect Flags: bit 1 = Clean Session, bit 2 = Will, bits 3-4 = Will QoS,
+	# bit 5 = Will Retain. Username/password (bits 6-7) not supported.
+	var connect_flags := 0x02
+	if not will_topic.is_empty():
+		connect_flags |= 0x04                       # Will Flag
+		connect_flags |= (will_qos & 0x03) << 3     # Will QoS
+		if will_retain:
+			connect_flags |= 0x20                   # Will Retain
+	var_header.append(connect_flags)
 	# Keep Alive
 	var_header.append((keep_alive_sec >> 8) & 0xFF)
 	var_header.append(keep_alive_sec & 0xFF)
-	# Payload: Client ID
+	# Payload: Client ID, then (if Will set) Will Topic + Will Message
 	var payload := _encode_utf8_string(client_id)
+	if not will_topic.is_empty():
+		payload.append_array(_encode_utf8_string(will_topic))
+		# Will Message is a binary payload prefixed with a 2-byte length.
+		var will_bytes := will_payload.to_utf8_buffer()
+		payload.append((will_bytes.size() >> 8) & 0xFF)
+		payload.append(will_bytes.size() & 0xFF)
+		payload.append_array(will_bytes)
 	# Fixed header: CONNECT (0x10)
 	var remaining := var_header.size() + payload.size()
 	packet.append(0x10)

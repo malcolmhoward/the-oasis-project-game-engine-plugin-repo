@@ -40,8 +40,9 @@ func _ready() -> void:
 	mqtt.disconnected.connect(_on_disconnected)
 	mqtt.message_received.connect(_on_message)
 
-	# Connect to broker
-	mqtt.connect_to_broker(broker_host, broker_port)
+	# Defer broker connect so OCPPeers in the initial scene can register
+	# their Last Will payloads before CONNECT is sent.
+	mqtt.connect_to_broker.call_deferred(broker_host, broker_port)
 
 
 func _on_connected() -> void:
