@@ -15,6 +15,10 @@ extends PanelContainer
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
 
+## Maximum height the body grows to before scrolling internally. Keeps a
+## long thinking trace from pushing the rest of the transcript out of view.
+const BODY_MAX_HEIGHT: int = 140
+
 var _expanded: bool = true
 var _orchestrator_id: String = ""
 var _start_ms: int = 0
@@ -22,7 +26,7 @@ var _start_ms: int = 0
 var _header_button: Button = null
 var _duration_label: Label = null
 var _body_label: RichTextLabel = null
-var _body_container: Control = null
+var _body_scroll: ScrollContainer = null
 
 
 func _init() -> void:
@@ -66,10 +70,11 @@ func _init() -> void:
 	_duration_label.add_theme_font_size_override("font_size", ArcReactor.FONT_ROLE)
 	header.add_child(_duration_label)
 
-	_body_container = Control.new()
-	_body_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body_container.custom_minimum_size = Vector2(0, 0)
-	vbox.add_child(_body_container)
+	_body_scroll = ScrollContainer.new()
+	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_body_scroll.custom_minimum_size = Vector2(0, 0)
+	vbox.add_child(_body_scroll)
 
 	_body_label = RichTextLabel.new()
 	_body_label.bbcode_enabled = true
@@ -80,8 +85,7 @@ func _init() -> void:
 	_body_label.add_theme_font_size_override("normal_font_size", ArcReactor.FONT_SMALL)
 	_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body_label.selection_enabled = true
-	_body_container.add_child(_body_label)
-	_body_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_body_scroll.add_child(_body_label)
 
 
 func start(orchestrator_id: String, provider: String) -> void:
@@ -98,8 +102,20 @@ func start(orchestrator_id: String, provider: String) -> void:
 
 func append_delta(delta: String) -> void:
 	_body_label.append_text(delta)
-	# Resize body container to fit content.
-	_body_container.custom_minimum_size = Vector2(0, _body_label.get_content_height())
+	# Cap the visible body at BODY_MAX_HEIGHT — content beyond that scrolls
+	# internally rather than pushing the rest of the transcript out of view.
+	var natural_h: int = int(_body_label.get_content_height())
+	var clamped_h: int = min(natural_h, BODY_MAX_HEIGHT)
+	_body_scroll.custom_minimum_size = Vector2(0, clamped_h)
+	# Auto-scroll the inner body to its bottom so the latest delta is visible.
+	# Defer one frame so the layout settles before we read max_value.
+	_scroll_body_to_bottom.call_deferred()
+
+
+func _scroll_body_to_bottom() -> void:
+	var bar := _body_scroll.get_v_scroll_bar()
+	if bar:
+		bar.value = bar.max_value
 
 
 func finish(duration_ms: int) -> void:
@@ -117,7 +133,7 @@ func _toggle_expanded() -> void:
 
 func _set_expanded(expanded: bool) -> void:
 	_expanded = expanded
-	_body_container.visible = expanded
+	_body_scroll.visible = expanded
 	var arrow := "▾" if expanded else "▸"
 	# Replace just the leading arrow character without losing the rest.
 	if _header_button.text.length() >= 1:
