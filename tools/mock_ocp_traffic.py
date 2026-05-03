@@ -113,7 +113,9 @@ def main():
         if rc == 0 or (hasattr(rc, 'value') and rc.value == 0):
             print(f"  [MQTT] Connected to {args.broker}:{args.port}")
             # (Re-)subscribe on every connect — survives broker restarts
+            # v1.4 input: dawn/cmd; v1.3 input: dawn (kept for backward compat)
             c.subscribe("dawn", qos=1)
+            c.subscribe("dawn/cmd", qos=1)
             # Publish peer status on (re)connect (v1.4: <component>/status)
             for component, peer_id, caps in peers:
                 c.publish(f"{component}/status", json.dumps({
@@ -133,13 +135,16 @@ def main():
         print(f"  [MQTT] Disconnected (rc={rc}). Auto-reconnect will retry...")
 
     def on_message(c, u, msg):
-        if msg.topic != "dawn":
+        if msg.topic not in ("dawn", "dawn/cmd"):
             return
         try:
             p = json.loads(msg.payload.decode())
         except Exception:
             return
-        text = p.get("value", p.get("text", ""))
+        # v1.4 cmd format: {action: "process_intent", parameters: {text: "..."}}
+        # v1.3 dawn topic: {value: "..."} or {text: "..."}
+        params = p.get("parameters", {}) or {}
+        text = params.get("text") or p.get("value") or p.get("text") or ""
         if not text or p.get("device") == "echo-dawn-mock":
             return
         r = "I'm not sure how to help with that. Try 'help' to see what I can do."
