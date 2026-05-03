@@ -179,7 +179,8 @@ func _process(delta: float):
 	var t = Time.get_time_dict_from_system()
 	time_label.text = MH.FMT_TIME % [t["hour"], t["minute"], t["second"]]
 	if date_label:
-		date_label.text = "%04d.%02d.%02d" % [t["year"], t["month"], t["day"]]
+		var d = Time.get_date_dict_from_system()
+		date_label.text = "%04d.%02d.%02d" % [d["year"], d["month"], d["day"]]
 
 	# Update FPS
 	fps_label.text = MH.FMT_FPS % Engine.get_frames_per_second()
