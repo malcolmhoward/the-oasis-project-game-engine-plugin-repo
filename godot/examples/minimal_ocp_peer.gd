@@ -40,7 +40,7 @@ func _on_connected() -> void:
 	print("Connected to MQTT broker!")
 	print("This peer is now visible as 'minimal-peer' on the OCP network.")
 	print("Try publishing a command:")
-	print('  mosquitto_pub -t oasis/example/command -m \'{"device":"minimal-peer","msg_type":"command","action":"hello","parameters":{}}\'')
+	print('  mosquitto_pub -t example/cmd -m \'{"device":"minimal-peer","msg_type":"command","action":"hello","parameters":{}}\'')
 
 
 func _on_command(action: String, parameters: Dictionary) -> void:

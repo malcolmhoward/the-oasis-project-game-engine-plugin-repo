@@ -69,21 +69,21 @@ func _on_fallback_text_submitted(text: String) -> void:
 			"parameters": {"text": text},
 			"timestamp": OCPMessage.now_ms(),
 		}
-		_mqtt.publish("oasis/dawn/input", JSON.stringify(msg))
+		_mqtt.publish(OCPMessage.cmd_topic("dawn"), JSON.stringify(msg))
 	if fallback_input:
 		fallback_input.clear()
 
 
 func _on_message(topic: String, payload: String) -> void:
-	# Track DAWN online status (OCP topic: dawn/status)
-	if topic == "dawn/status" or topic == "oasis/dawn/status":
+	# Track DAWN online status (v1.4 OCP topic: dawn/status)
+	if topic == "dawn/status":
 		var msg = OCPMessage.parse(payload)
 		if msg and msg.get("status") == "online":
 			_dawn_online = true
 			_update_status()
 
-	# Display DAWN responses in fallback log
-	if topic == "dawn" or topic == "oasis/dawn/output":
+	# Display DAWN responses in fallback log (v1.4: dawn topic for output)
+	if topic == "dawn":
 		var msg = OCPMessage.parse(payload)
 		if msg and fallback_log:
 			var text: String = msg.get("text", msg.get("response", JSON.stringify(msg)))

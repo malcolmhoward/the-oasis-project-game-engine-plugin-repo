@@ -253,12 +253,12 @@ func _on_message(topic: String, _payload: String):
 		_pulse_timers["broker_to_godot"] = 1.0
 		_pulse_timers["godot_to_broker"] = 1.0
 		_spawn_particle("broker_to_godot", pcolor)
-	elif topic.begins_with("oasis/"):
+	elif topic.ends_with("/status") or topic.ends_with("/cmd") or topic.ends_with("/events"):
+		# v1.4 OCP topic conventions
 		_pulse_timers["broker_to_godot"] = 1.0
 		_spawn_particle("broker_to_godot", pcolor)
-		if topic.ends_with("/command") or topic.ends_with("/status") or topic.ends_with("/events"):
-			_pulse_timers["godot_to_broker"] = 1.0
-			_spawn_particle("godot_to_broker", pcolor)
+		_pulse_timers["godot_to_broker"] = 1.0
+		_spawn_particle("godot_to_broker", pcolor)
 
 
 func _spawn_particle(conn: String, color: Color):
@@ -289,7 +289,7 @@ func _on_dpad(btn_name: String):
 	if action.is_empty():
 		return
 	if _mqtt:
-		_mqtt.publish("oasis/e3-avatar/command", JSON.stringify({
+		_mqtt.publish(OCPMessage.cmd_topic("e3-avatar"), JSON.stringify({
 			"device": "e3-avatar", "msg_type": "command",
 			"action": action, "parameters": params,
 			"timestamp": OCPMessage.now_ms(),

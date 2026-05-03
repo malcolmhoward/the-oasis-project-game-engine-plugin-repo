@@ -114,17 +114,12 @@ def main():
             print(f"  [MQTT] Connected to {args.broker}:{args.port}")
             # (Re-)subscribe on every connect — survives broker restarts
             c.subscribe("dawn", qos=1)
-            # Publish peer status on (re)connect
+            # Publish peer status on (re)connect (v1.4: <component>/status)
             for component, peer_id, caps in peers:
                 c.publish(f"{component}/status", json.dumps({
                     "device": component, "msg_type": "status", "status": "online",
                     "timestamp": int(time.time() * 1000), "version": "0.1.0-mock",
                     "capabilities": caps,
-                }), qos=1, retain=True)
-                c.publish(f"oasis/{peer_id}/status", json.dumps({
-                    "peer_id": peer_id, "component": component,
-                    "embodiment": "software", "status": "online",
-                    "timestamp": int(time.time() * 1000),
                 }), qos=1, retain=True)
                 c.publish("echo/discovery/simulates", json.dumps({
                     "peer_id": peer_id, "component": component,
@@ -219,15 +214,14 @@ def main():
         }))
         # Publish OCP command to avatar if applicable
         if ocp_command:
-            # Publish OCP command to the E3 avatar's command topic
-            # device must match the avatar's peer_id for OCPPeer to process it
-            c.publish("oasis/e3-avatar/command", json.dumps({
+            # v1.4: <component>/cmd. The avatar's component_name is "e3-avatar".
+            c.publish("e3-avatar/cmd", json.dumps({
                 "device": "e3-avatar", "msg_type": "command",
                 "action": ocp_command["action"],
                 "parameters": ocp_command.get("parameters", {}),
                 "timestamp": int(time.time() * 1000),
             }))
-            print(f"  [OCP] -> oasis/godot/command: {ocp_command['action']}")
+            print(f"  [OCP] -> e3-avatar/cmd: {ocp_command['action']}")
         dawn_count[0] += 1
         print(f"  [DAWN] {text} -> {r}")
 

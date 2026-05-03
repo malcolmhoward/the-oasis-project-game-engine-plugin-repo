@@ -8,7 +8,7 @@
 ##   var mqtt = MQTTBridge.new()
 ##   add_child(mqtt)
 ##   mqtt.connect_to_broker("localhost", 9001)
-##   mqtt.subscribe("oasis/#")
+##   mqtt.subscribe("+/status")
 ##   mqtt.message_received.connect(_on_message)
 ##
 ## For production use, consider replacing with godot-mqtt addon from AssetLib.

@@ -462,7 +462,7 @@ func _disconnect_mic():
 
 func _publish_swap(provider: String, source: String, component: String):
 	if _mqtt:
-		_mqtt.publish("oasis/godot-control/status", JSON.stringify({
+		_mqtt.publish(OCPMessage.status_topic("godot-control"), JSON.stringify({
 			"device": "godot-control",
 			"msg_type": "status",
 			"provider": provider,
@@ -556,7 +556,7 @@ func _on_dpad(btn_name: String):
 		return
 
 	if _mqtt:
-		_mqtt.publish("oasis/e3-avatar/command", JSON.stringify({
+		_mqtt.publish(OCPMessage.cmd_topic("e3-avatar"), JSON.stringify({
 			"device": "e3-avatar",
 			"msg_type": "command",
 			"action": action,
