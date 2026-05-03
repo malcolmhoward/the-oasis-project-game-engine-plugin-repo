@@ -166,7 +166,7 @@ func _publish_virtual_sensors() -> void:
 		"timestamp": OCPMessage.now_ms(),
 	}
 	ocp_peer._mqtt.publish(
-		"oasis/%s/sensors/position" % ocp_peer.component_name,
+		"%s/sensors/position" % ocp_peer.component_name,
 		JSON.stringify(pos_msg)
 	)
 
@@ -182,6 +182,6 @@ func _publish_arrival() -> void:
 		"timestamp": OCPMessage.now_ms(),
 	}
 	ocp_peer._mqtt.publish(
-		"oasis/%s" % ocp_peer.peer_id,
+		OCPMessage.events_topic(ocp_peer.peer_id),
 		JSON.stringify(event)
 	)

@@ -143,8 +143,8 @@ func _on_mqtt_message(topic: String, payload: String) -> void:
 
 	# Update device layer sensor data
 	# Sensor topics: "aura" (motion/GPS/enviro), "stat" (system metrics/battery),
-	# or legacy "oasis/sensors/..." format
-	if topic == "aura" or topic == "stat" or topic.contains("/sensors/") or topic.contains("/status"):
+	# or v1.4 component-prefixed "<component>/sensors/..." and "<component>/status"
+	if topic == "aura" or topic == "stat" or topic.contains("/sensors/") or topic.ends_with("/status"):
 		_update_sensor_data(msg)
 
 	# Update platform layer service state

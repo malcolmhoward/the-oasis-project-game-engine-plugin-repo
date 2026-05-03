@@ -315,7 +315,7 @@ func _publish_expression(expression: String, trigger: String):
 	if oasis_mqtt:
 		var mqtt = oasis_mqtt.get_mqtt()
 		if mqtt:
-			mqtt.publish("oasis/companion/status", JSON.stringify({
+			mqtt.publish(OCPMessage.status_topic("companion"), JSON.stringify({
 				"device": "companion",
 				"msg_type": "status",
 				"expression": expression,

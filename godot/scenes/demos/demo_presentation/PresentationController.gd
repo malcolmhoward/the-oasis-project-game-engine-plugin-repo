@@ -415,4 +415,4 @@ func _publish_presentation_event(event: String, data: Dictionary):
 				"timestamp": OCPMessage.now_ms(),
 			}
 			msg.merge(data)
-			mqtt.publish("oasis/presentation/events", JSON.stringify(msg))
+			mqtt.publish(OCPMessage.events_topic("presentation"), JSON.stringify(msg))
