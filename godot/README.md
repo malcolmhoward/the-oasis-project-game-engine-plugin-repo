@@ -165,6 +165,45 @@ indistinguishable from a real hardware component.
 | E4 | Software-Only | **Full** — service peers, infrastructure nodes |
 | E5 | Hybrid | Partial (via Provider pattern, future work) |
 
+## Offline Detection (LWT)
+
+Every OCPPeer registers a **Last Will and Testament** (LWT) before connecting
+so the broker automatically publishes an `offline` status if the client
+disconnects ungracefully (crash, network drop, missed keep-alive ping).
+
+LWT is a standard MQTT v3.1.1 feature ([§3.1.2.5](https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718031)),
+not something OCP invented — every MQTT library exposes it (paho-mqtt's
+`will_set()`, mosquitto's `mosquitto_will_set()`, etc.). OCP standardizes
+the **payload contract** on top of it:
+
+| Field | Value |
+|-------|-------|
+| Topic | `<component>/status` |
+| Payload | OCP status message with `status: "offline"` |
+| Retain | `true` (so new subscribers see the last-known state) |
+| QoS | `0` |
+
+This matches the convention used by every other OCP peer (S.T.A.T.,
+M.I.R.A.G.E., D.A.W.N., the simulation framework's `set_lwt()` API), so
+broker-side observers cannot tell whether the offline status came from a
+graceful exit or a crash — they just see the same `offline` message on the
+same retained topic. ADR-0003's "E1 — Full OCP participation" requirement
+calls this out explicitly.
+
+`OCPPeer._set_lwt()` is called automatically in `_ready()`. If you build
+a peer manually without OCPPeer, call `MQTTBridge.set_will()` before
+`connect_to_broker()`:
+
+```gdscript
+mqtt.set_will("my-component/status", JSON.stringify({
+    "device": "my-peer",
+    "msg_type": "status",
+    "status": "offline",
+    "timestamp": 0,  # OCP convention: timestamp=0 marks an LWT message
+}), true)  # retain
+mqtt.connect_to_broker("localhost", 9001)
+```
+
 ## Cross-Platform Export
 
 The plugin uses only Godot built-in APIs (WebSocketPeer, JSON, Node). No
