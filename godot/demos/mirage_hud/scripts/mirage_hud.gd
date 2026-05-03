@@ -48,6 +48,16 @@ var _live_battery_pct: float = 0.0
 var _live_battery_voltage: float = 0.0
 var _live_fan: float = 0.0
 
+# Environmental data (from aura/Enviro)
+var _env_humidity: float = -1.0
+var _env_aqi: float = -1.0
+var _env_eco2: float = -1.0
+# GPS data (from aura/GPS)
+var _gps_lat: float = NAN
+var _gps_lon: float = NAN
+var _gps_lat_hemi: String = ""
+var _gps_lon_hemi: String = ""
+
 var _camera_texture: ImageTexture = null
 var _test_pattern: ImageTexture = null
 var _camera_feed: CameraFeed = null
@@ -73,12 +83,17 @@ const FFMPEG_STALE_TIMEOUT := 3.0   # Restart ffmpeg if no new frame for 3 secon
 @onready var status_dot: Label = $HUDOverlay/TopBar/StatusDot
 @onready var compass_label: Label = $HUDOverlay/CompassBar
 @onready var compass_strip = $HUDOverlay/CompassStrip
+@onready var pitch_ladder = $HUDOverlay/PitchLadder
+@onready var gps_label: Label = $HUDOverlay/GPSLabel
 @onready var stat_panel_bg: PanelContainer = $HUDOverlay/StatPanelBG
 @onready var stat_panel: Control = $HUDOverlay/StatPanelBG/StatPanel
 @onready var cpu_value: Label = $HUDOverlay/StatPanelBG/StatPanel/CPURow/Value
 @onready var mem_value: Label = $HUDOverlay/StatPanelBG/StatPanel/MEMRow/Value
 @onready var temp_value: Label = $HUDOverlay/StatPanelBG/StatPanel/TEMPRow/Value
 @onready var fan_value: Label = $HUDOverlay/StatPanelBG/StatPanel/FANRow/Value
+@onready var hum_value: Label = $HUDOverlay/StatPanelBG/StatPanel/HUMRow/Value
+@onready var aqi_value: Label = $HUDOverlay/StatPanelBG/StatPanel/AQIRow/Value
+@onready var co2_value: Label = $HUDOverlay/StatPanelBG/StatPanel/CO2Row/Value
 @onready var bat_value: Label = $HUDOverlay/StatPanelBG/StatPanel/BATRow/Value
 @onready var bat_volt: Label = $HUDOverlay/StatPanelBG/StatPanel/BATRow/Voltage
 @onready var fps_label: Label = $HUDOverlay/FPSCounter
@@ -228,7 +243,12 @@ func _process(delta: float):
 	compass_label.text = "%s %03d°" % [_heading_to_cardinal(heading), int(round(heading))]
 	if compass_strip:
 		compass_strip.heading_deg = heading
-	pitch_value.text = "%d" % int(5.0 * sin(Time.get_unix_time_from_system() * 0.5))
+	var pitch_now: float = 5.0 * sin(Time.get_unix_time_from_system() * 0.5)
+	pitch_value.text = "%d" % int(pitch_now)
+	if pitch_ladder:
+		pitch_ladder.pitch_deg = pitch_now
+
+	_update_gps_label()
 
 
 func _process_simulated_metrics(delta: float):
@@ -475,6 +495,14 @@ func set_stat_live(live: bool):
 
 
 func _on_mqtt_message(topic: String, payload: String):
+	# aura/enviro/gps drive HUD readouts even in L0 stat mode (they're
+	# independent A.U.R.A. data sources, not part of the stat provider).
+	if topic == "aura":
+		var amsg = JSON.parse_string(payload)
+		if amsg is Dictionary:
+			_consume_aura(amsg)
+		return
+
 	if not _stat_live:
 		return
 	if topic != "stat":
@@ -491,6 +519,50 @@ func _on_mqtt_message(topic: String, payload: String):
 	elif device == "BatteryStatus":
 		_live_battery_pct = msg.get("percentage", _live_battery_pct)
 		_live_battery_voltage = msg.get("voltage", _live_battery_voltage)
+
+
+func _consume_aura(msg: Dictionary) -> void:
+	var device: String = msg.get("device", "")
+	match device:
+		"GPS":
+			_gps_lat = float(msg.get("latitudeDegrees", msg.get("latitude", NAN)))
+			_gps_lon = float(msg.get("longitudeDegrees", msg.get("longitude", NAN)))
+			_gps_lat_hemi = str(msg.get("lat", ""))
+			_gps_lon_hemi = str(msg.get("lon", ""))
+		"Enviro":
+			_env_humidity = float(msg.get("humidity", _env_humidity))
+			_env_aqi = float(msg.get("air_quality", _env_aqi))
+			_env_eco2 = float(msg.get("eco2_ppm", _env_eco2))
+			_update_environmental_rows()
+
+
+func _update_environmental_rows() -> void:
+	if hum_value and _env_humidity >= 0:
+		hum_value.text = "%02d%%" % int(round(_env_humidity))
+	if aqi_value and _env_aqi >= 0:
+		aqi_value.text = "%03d" % int(round(_env_aqi))
+		var aqi_color: Color = MH.DATA_WHITE
+		if _env_aqi < 50:
+			aqi_color = MH.ARMOR_ONLINE
+		elif _env_aqi < 100:
+			aqi_color = MH.WARNING_ORANGE
+		else:
+			aqi_color = MH.ALERT_RED
+		aqi_value.add_theme_color_override("font_color", aqi_color)
+	if co2_value and _env_eco2 >= 0:
+		co2_value.text = "%4d" % int(round(_env_eco2))
+
+
+func _update_gps_label() -> void:
+	if gps_label == null:
+		return
+	if is_nan(_gps_lat) or is_nan(_gps_lon):
+		gps_label.text = "GPS: ---"
+		return
+	gps_label.text = "GPS: %.4f%s, %.4f%s" % [
+		absf(_gps_lat), _gps_lat_hemi if _gps_lat_hemi != "" else ("N" if _gps_lat >= 0 else "S"),
+		absf(_gps_lon), _gps_lon_hemi if _gps_lon_hemi != "" else ("E" if _gps_lon >= 0 else "W"),
+	]
 
 
 func _generate_noise_frames():
@@ -542,6 +614,13 @@ func _style_hud():
 		if label_font:
 			date_label.add_theme_font_override("font", label_font)
 
+	# GPS label — Aldrich, secondary cyan
+	if gps_label:
+		gps_label.add_theme_font_size_override("font_size", MH.FONT_METRIC)
+		gps_label.add_theme_color_override("font_color", MH.SECONDARY_CYAN)
+		if label_font:
+			gps_label.add_theme_font_override("font", label_font)
+
 	# AI name — devgothic, secondary cyan
 	ai_name_label.add_theme_font_size_override("font_size", MH.FONT_AI_NAME)
 	ai_name_label.add_theme_color_override("font_color", MH.SECONDARY_CYAN)
@@ -567,7 +646,7 @@ func _style_hud():
 	if stat_panel_bg:
 		stat_panel_bg.add_theme_stylebox_override("panel", stat_bg)
 
-	for row_name in ["CPURow", "MEMRow", "TEMPRow", "FANRow", "BATRow"]:
+	for row_name in ["CPURow", "MEMRow", "TEMPRow", "FANRow", "HUMRow", "AQIRow", "CO2Row", "BATRow"]:
 		var row = stat_panel.get_node_or_null(row_name)
 		if row:
 			var label_node = row.get_node_or_null("Label")

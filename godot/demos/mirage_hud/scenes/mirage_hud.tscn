@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://demos/mirage_hud/scripts/mirage_hud.gd" id="1"]
 [ext_resource type="Script" path="res://demos/mirage_hud/scripts/compass_strip.gd" id="2"]
+[ext_resource type="Script" path="res://demos/mirage_hud/scripts/pitch_ladder.gd" id="3"]
+[ext_resource type="Script" path="res://demos/mirage_hud/scripts/notification_toast.gd" id="4"]
 
 [node name="MirageHUD" type="Control"]
 layout_mode = 3
@@ -166,10 +168,10 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -160
+offset_left = -180
 offset_top = 36
 offset_right = -8
-offset_bottom = 200
+offset_bottom = 280
 grow_horizontal = 0
 
 [node name="StatPanel" type="VBoxContainer" parent="HUDOverlay/StatPanelBG"]
@@ -232,6 +234,48 @@ size_flags_horizontal = 3
 text = "045%"
 horizontal_alignment = 2
 
+[node name="HUMRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/HUMRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "HUM"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/HUMRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "--%"
+horizontal_alignment = 2
+
+[node name="AQIRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/AQIRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "AQI"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/AQIRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "--"
+horizontal_alignment = 2
+
+[node name="CO2Row" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/CO2Row"]
+layout_mode = 2
+custom_minimum_size = Vector2(45, 0)
+text = "CO2"
+
+[node name="Value" type="Label" parent="HUDOverlay/StatPanelBG/StatPanel/CO2Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "----"
+horizontal_alignment = 2
+
 [node name="BATRow" type="HBoxContainer" parent="HUDOverlay/StatPanelBG/StatPanel"]
 layout_mode = 2
 
@@ -262,6 +306,48 @@ offset_right = -8
 grow_horizontal = 0
 horizontal_alignment = 2
 text = "FPS: 60"
+
+[node name="GPSLabel" type="Label" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120
+offset_top = 110
+offset_right = 120
+offset_bottom = 132
+grow_horizontal = 2
+horizontal_alignment = 1
+text = "GPS: ---"
+
+[node name="PitchLadder" type="Control" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160
+offset_top = -100
+offset_right = 160
+offset_bottom = 100
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3")
+
+[node name="NotificationToast" type="PanelContainer" parent="HUDOverlay"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180
+offset_top = 130
+offset_right = 180
+offset_bottom = 200
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("4")
 
 [node name="AlertArea" type="Label" parent="HUDOverlay"]
 layout_mode = 1
