@@ -69,8 +69,10 @@ const FFMPEG_STALE_TIMEOUT := 3.0   # Restart ffmpeg if no new frame for 3 secon
 @onready var camera_bg: TextureRect = $CameraBackground
 @onready var top_bar_label: Label = $HUDOverlay/TopBar/MirageLabel
 @onready var time_label: Label = $HUDOverlay/TopBar/TimeLabel
+@onready var date_label: Label = $HUDOverlay/DateLabel
 @onready var status_dot: Label = $HUDOverlay/TopBar/StatusDot
 @onready var compass_label: Label = $HUDOverlay/CompassBar
+@onready var compass_strip = $HUDOverlay/CompassStrip
 @onready var stat_panel_bg: PanelContainer = $HUDOverlay/StatPanelBG
 @onready var stat_panel: Control = $HUDOverlay/StatPanelBG/StatPanel
 @onready var cpu_value: Label = $HUDOverlay/StatPanelBG/StatPanel/CPURow/Value
@@ -173,9 +175,11 @@ func _load_ai_icons():
 
 
 func _process(delta: float):
-	# Update system time
+	# Update system time + date
 	var t = Time.get_time_dict_from_system()
 	time_label.text = MH.FMT_TIME % [t["hour"], t["minute"], t["second"]]
+	if date_label:
+		date_label.text = "%04d.%02d.%02d" % [t["year"], t["month"], t["day"]]
 
 	# Update FPS
 	fps_label.text = MH.FMT_FPS % Engine.get_frames_per_second()
@@ -220,7 +224,9 @@ func _process(delta: float):
 
 	# Simulated compass and pitch drift
 	var heading = fmod(Time.get_unix_time_from_system() * 2.0, 360.0)
-	compass_label.text = _heading_to_cardinal(heading)
+	compass_label.text = "%s %03d°" % [_heading_to_cardinal(heading), int(round(heading))]
+	if compass_strip:
+		compass_strip.heading_deg = heading
 	pitch_value.text = "%d" % int(5.0 * sin(Time.get_unix_time_from_system() * 0.5))
 
 
@@ -527,6 +533,13 @@ func _style_hud():
 	compass_label.add_theme_color_override("font_color", MH.PRIMARY_CYAN)
 	if hud_font:
 		compass_label.add_theme_font_override("font", hud_font)
+
+	# Date label — Aldrich subdued
+	if date_label:
+		date_label.add_theme_font_size_override("font_size", MH.FONT_METRIC)
+		date_label.add_theme_color_override("font_color", MH.SECONDARY_CYAN)
+		if label_font:
+			date_label.add_theme_font_override("font", label_font)
 
 	# AI name — devgothic, secondary cyan
 	ai_name_label.add_theme_font_size_override("font_size", MH.FONT_AI_NAME)
