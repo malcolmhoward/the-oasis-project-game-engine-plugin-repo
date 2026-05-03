@@ -15,11 +15,11 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12
-offset_top = 12
-offset_right = -12
-offset_bottom = -12
-theme_override_constants/separation = 8
+offset_left = 8
+offset_top = 8
+offset_right = -8
+offset_bottom = -8
+theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
@@ -52,7 +52,6 @@ horizontal_scroll_mode = 0
 [node name="TranscriptBox" type="VBoxContainer" parent="VBox/TranscriptScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="TelemetryRings" type="Control" parent="VBox"]
@@ -68,13 +67,17 @@ mouse_filter = 2
 
 [node name="InputRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+size_flags_vertical = 8
 theme_override_constants/separation = 8
 
 [node name="InputField" type="LineEdit" parent="VBox/InputRow"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 placeholder_text = "Ask D.A.W.N..."
 
 [node name="SendButton" type="Button" parent="VBox/InputRow"]
 layout_mode = 2
+size_flags_vertical = 4
 text = "Send"
