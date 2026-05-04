@@ -12,6 +12,7 @@ extends Control
 const ArcReactor = preload("res://resources/design_tokens.gd")
 const MessageBubble = preload("res://scripts/message_bubble.gd")
 const ThinkingBlockClass = preload("res://demos/dawn_ui/scripts/thinking_block.gd")
+const ToolCallEntryClass = preload("res://demos/dawn_ui/scripts/tool_call_entry.gd")
 
 @onready var status_dot: Label = $VBox/Header/StatusDot
 @onready var status_label: Label = $VBox/Header/StatusLabel
@@ -32,6 +33,9 @@ var _last_metrics: Dictionary = {}
 # Phase 3 — active thinking blocks keyed by orchestrator_id so streaming
 # deltas land in the right block when several arrive interleaved.
 var _thinking_blocks: Dictionary = {}
+# Phase 3 — active tool entries keyed by call_id so tool_result lands on
+# the matching entry even when multiple tools run interleaved.
+var _tool_entries: Dictionary = {}
 
 
 func _ready() -> void:
@@ -287,9 +291,25 @@ func _on_thinking_event(event: String, msg: Dictionary) -> void:
 			_thinking_blocks.erase(orch_id)
 
 
-func _on_tool_event(event: String, _msg: Dictionary) -> void:
-	# TODO Phase 3: purple-themed bubble (Role.DEBUG) with tool_name + args/result.
-	pass
+func _on_tool_event(event: String, msg: Dictionary) -> void:
+	var call_id: String = str(msg.get("call_id", ""))
+	if call_id.is_empty():
+		return
+	match event:
+		"tool_call":
+			var entry: ToolCallEntryClass = ToolCallEntryClass.new()
+			if transcript_box:
+				transcript_box.add_child(entry)
+			var args: Dictionary = msg.get("arguments", {})
+			entry.start(call_id, str(msg.get("tool_name", "tool")), args)
+			_tool_entries[call_id] = entry
+			_scroll_to_bottom.call_deferred()
+		"tool_result":
+			var existing = _tool_entries.get(call_id)
+			if existing and is_instance_valid(existing):
+				existing.finish(msg.get("result", null),
+					int(msg.get("duration_ms", 0)))
+			_tool_entries.erase(call_id)
 
 
 func _on_plan_event(event: String, _msg: Dictionary) -> void:
