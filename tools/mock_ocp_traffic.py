@@ -262,6 +262,49 @@ def main():
                 "duration_ms": 420 + len(r) * 4,
                 "timestamp": int(time.time() * 1000),
             }))
+
+        # Phase 3 demo: emit a synthetic tool call/result pair on certain
+        # intents so the Godot transcript shows the purple tool-execution
+        # entry. Keyed by intent so we don't pad every interaction.
+        tool_invocation = None
+        if "temperature" in tl or "weather" in tl:
+            tool_invocation = (
+                "read_environmental",
+                {"sensor": "enviro", "fields": ["temp", "humidity", "air_quality"]},
+                {"temp_c": 22.5, "humidity": 65, "air_quality_aqi": 85},
+            )
+        elif "battery" in tl or "power" in tl:
+            tool_invocation = (
+                "read_battery_status",
+                {"peer_id": "stat"},
+                {"percentage": 85, "voltage": 12.4, "charging": False},
+            )
+        elif "peer" in tl or "online" in tl or "who else" in tl:
+            tool_invocation = (
+                "list_active_peers",
+                {"include_simulated": True},
+                {"peers": ["echo-aura-mock", "echo-stat-mock", "echo-scope-mock", "echo-dawn-mock"]},
+            )
+        if tool_invocation is not None:
+            t_name, t_args, t_result = tool_invocation
+            call_id = "call-%d" % dawn_count[0]
+            c.publish("dawn/events", json.dumps({
+                "device": "dawn", "msg_type": "event",
+                "event": "tool_call",
+                "call_id": call_id,
+                "tool_name": t_name,
+                "arguments": t_args,
+                "timestamp": int(time.time() * 1000),
+            }))
+            c.publish("dawn/events", json.dumps({
+                "device": "dawn", "msg_type": "event",
+                "event": "tool_result",
+                "call_id": call_id,
+                "tool_name": t_name,
+                "result": t_result,
+                "duration_ms": 150 + len(t_name) * 4,
+                "timestamp": int(time.time() * 1000),
+            }))
         # Publish DAWN response
         c.publish("dawn", json.dumps({
             "device": "echo-dawn-mock", "action": "speak",
