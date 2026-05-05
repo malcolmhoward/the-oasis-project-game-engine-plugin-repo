@@ -265,9 +265,12 @@ def main():
 
         # Phase 3 demo: emit a synthetic tool call/result pair on certain
         # intents so the Godot transcript shows the purple tool-execution
-        # entry. Keyed by intent so we don't pad every interaction.
+        # entry. Keyword sets MUST match the response matchers above so
+        # any phrasing that gets a substantive response also gets a tool
+        # entry — otherwise users see "DAWN answered, but no tool fired"
+        # for what feels like the same question.
         tool_invocation = None
-        if "temperature" in tl or "weather" in tl:
+        if "temperature" in tl or "temp" in tl or "weather" in tl:
             tool_invocation = (
                 "read_environmental",
                 {"sensor": "enviro", "fields": ["temp", "humidity", "air_quality"]},
