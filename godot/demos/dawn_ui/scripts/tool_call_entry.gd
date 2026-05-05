@@ -122,7 +122,7 @@ func finish(result: Variant, duration_ms: int = 0) -> void:
 		duration_ms = OCPMessage.now_ms() - _start_ms
 	_duration_label.text = "%.2fs" % (duration_ms / 1000.0)
 
-	var is_error := result is Dictionary and result.has("error")
+	var is_error: bool = result is Dictionary and result.has("error")
 	if is_error:
 		_status_label.text = "ERROR"
 		_status_label.add_theme_color_override("font_color", ArcReactor.STATUS_ERROR)
@@ -130,9 +130,13 @@ func finish(result: Variant, duration_ms: int = 0) -> void:
 		_status_label.text = "DONE"
 		_status_label.add_theme_color_override("font_color", ArcReactor.STATUS_SUCCESS)
 
-	var pretty_result := JSON.stringify(result, "  ") if result is Dictionary or result is Array else str(result)
-	var label_color := ArcReactor.STATUS_ERROR if is_error else ArcReactor.TEXT_TERTIARY
-	var existing := _body_label.text
+	var pretty_result: String
+	if result is Dictionary or result is Array:
+		pretty_result = JSON.stringify(result, "  ")
+	else:
+		pretty_result = str(result)
+	var label_color: Color = ArcReactor.STATUS_ERROR if is_error else ArcReactor.TEXT_TERTIARY
+	var existing: String = _body_label.text
 	_body_label.text = "%s\n\n[color=#%s]result:[/color]\n[code]%s[/code]" % [
 		existing, label_color.to_html(false), pretty_result]
 	_resize_body()
