@@ -89,6 +89,17 @@ func _init() -> void:
 	_body_scroll.custom_minimum_size = Vector2(0, 0)
 	vbox.add_child(_body_scroll)
 
+	# Wrap the body label in a MarginContainer so the text has horizontal
+	# padding from the panel's accent border on the left and the panel
+	# edge on the right — mirrors the plan block's step-list padding.
+	var body_margin := MarginContainer.new()
+	body_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_margin.add_theme_constant_override("margin_left", ArcReactor.SPACE_MD)
+	body_margin.add_theme_constant_override("margin_right", ArcReactor.SPACE_MD)
+	body_margin.add_theme_constant_override("margin_top", ArcReactor.SPACE_XS)
+	body_margin.add_theme_constant_override("margin_bottom", ArcReactor.SPACE_XS)
+	_body_scroll.add_child(body_margin)
+
 	_body_label = RichTextLabel.new()
 	_body_label.bbcode_enabled = true
 	_body_label.fit_content = true
@@ -98,7 +109,7 @@ func _init() -> void:
 	_body_label.add_theme_font_size_override("normal_font_size", ArcReactor.FONT_SMALL)
 	_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body_label.selection_enabled = true
-	_body_scroll.add_child(_body_label)
+	body_margin.add_child(_body_label)
 
 
 func start(orchestrator_id: String, provider: String) -> void:
