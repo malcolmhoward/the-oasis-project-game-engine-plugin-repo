@@ -5,13 +5,12 @@
 ## each with a search box and a scrollable item list. Built entirely
 ## in code (no .tscn) so the inspector ships as a single file.
 ##
-## Implementation note: previously a Window subclass — Godot 4
-## embedded sub-windows render through a sub-viewport with default
-## linear-filter blitting that made text fuzzy. Then a Control
-## overlay child of DawnUI — text rendered at 1:1 but the dialog got
-## clipped to the DawnUI panel's narrow column. Now a CanvasLayer
-## root so the inspector escapes the parent's clip region while
-## still rendering directly into the host viewport — best of both.
+## Implementation note: a CanvasLayer root so the dialog escapes the
+## DawnUI panel's clip region while still rendering directly into the
+## host viewport (no SubViewport blur). The dialog itself is a non-
+## modal floating panel — drag the title bar to move, collapse to a
+## title-only strip, close button to dismiss. Same pattern as
+## control_panel.gd, adapted for a CanvasLayer host.
 ##
 ## Subscribes implicitly via dawn_ui's event router for the demo:
 ##   dawn/events with event=memory_update overwrites the named
@@ -76,9 +75,16 @@ const MOCK_SEEDS := {
 var _state: Dictionary = {}
 var _root_vbox: VBoxContainer = null
 var _tab_container: TabContainer = null
-var _backdrop: ColorRect = null
 var _dialog_panel: PanelContainer = null
 var _root_control: Control = null  # full-viewport Control inside the CanvasLayer
+var _body_container: Control = null  # collapsible content under the title bar
+var _drag_handle: Label = null
+var _collapse_button: Button = null
+# Drag/collapse state — same pattern as control_panel.gd.
+var _dragging: bool = false
+var _drag_offset: Vector2 = Vector2.ZERO
+var _collapsed: bool = false
+var _has_been_dragged: bool = false  # switch from CENTER anchors to manual on first drag
 # Project fonts loaded once and reused.
 var _font_sans: Font = null
 var _font_mono: Font = null
@@ -112,18 +118,12 @@ func _build_ui() -> void:
 	# the DawnUI panel's narrow column.
 	_root_control = Control.new()
 	_root_control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_root_control.mouse_filter = Control.MOUSE_FILTER_STOP
+	# PASS instead of STOP — clicks outside the dialog go through to
+	# whatever is below, since this is a non-modal floating panel.
+	_root_control.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(_root_control)
 
-	# ─── Backdrop: dim full-rect ColorRect, click to dismiss ─────────
-	_backdrop = ColorRect.new()
-	_backdrop.color = Color(0, 0, 0, 0.55)
-	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	_backdrop.gui_input.connect(_on_backdrop_input)
-	_root_control.add_child(_backdrop)
-
-	# ─── Dialog panel: centred, fixed-ish size, holds the tabs ───────
+	# ─── Dialog panel: starts centred, drag converts to manual pos ───
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_dialog_panel.custom_minimum_size = Vector2(480, 400)
@@ -138,38 +138,83 @@ func _build_ui() -> void:
 	style.border_width_top = 1
 	style.border_width_bottom = 1
 	style.set_corner_radius_all(ArcReactor.RADIUS_MD)
-	style.content_margin_left = ArcReactor.SPACE_MD
-	style.content_margin_right = ArcReactor.SPACE_MD
-	style.content_margin_top = ArcReactor.SPACE_SM
-	style.content_margin_bottom = ArcReactor.SPACE_SM
+	# Drop content margins to 0 — the title bar styles its own padding,
+	# and the body's TabContainer doesn't need outer padding.
+	style.content_margin_left = 0
+	style.content_margin_right = 0
+	style.content_margin_top = 0
+	style.content_margin_bottom = 0
 	_dialog_panel.add_theme_stylebox_override("panel", style)
 	_root_control.add_child(_dialog_panel)
 
 	_root_vbox = VBoxContainer.new()
-	_root_vbox.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	_root_vbox.add_theme_constant_override("separation", 0)
 	_dialog_panel.add_child(_root_vbox)
 
-	# ─── Title bar with close button ─────────────────────────────────
-	var title_row := HBoxContainer.new()
-	title_row.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
-	_root_vbox.add_child(title_row)
+	# ─── Drag bar with title (drag handle), collapse, close ──────────
+	var drag_bar := PanelContainer.new()
+	drag_bar.mouse_filter = Control.MOUSE_FILTER_PASS
+	var drag_style := StyleBoxFlat.new()
+	drag_style.bg_color = ArcReactor.BG_DARK
+	drag_style.set_corner_radius_individual(ArcReactor.RADIUS_MD,
+		ArcReactor.RADIUS_MD, 0, 0)
+	drag_style.content_margin_left = ArcReactor.SPACE_MD
+	drag_style.content_margin_right = ArcReactor.SPACE_MD
+	drag_style.content_margin_top = ArcReactor.SPACE_XS
+	drag_style.content_margin_bottom = ArcReactor.SPACE_XS
+	drag_bar.add_theme_stylebox_override("panel", drag_style)
+	_root_vbox.add_child(drag_bar)
 
-	var title_label := Label.new()
-	title_label.text = "D.A.W.N. Memory"
-	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_label.add_theme_color_override("font_color", ArcReactor.ARC_CORE)
-	title_label.add_theme_font_size_override("font_size", ArcReactor.FONT_SUBHEAD)
+	var drag_row := HBoxContainer.new()
+	drag_row.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	drag_bar.add_child(drag_row)
+
+	_drag_handle = Label.new()
+	_drag_handle.text = "≡ D.A.W.N. Memory"
+	_drag_handle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_drag_handle.add_theme_color_override("font_color", ArcReactor.ARC_CORE)
+	_drag_handle.add_theme_font_size_override("font_size", ArcReactor.FONT_SUBHEAD)
+	_drag_handle.mouse_filter = Control.MOUSE_FILTER_STOP
+	_drag_handle.mouse_default_cursor_shape = Control.CURSOR_DRAG
+	_drag_handle.gui_input.connect(_on_drag_input)
 	if _font_sans:
-		title_label.add_theme_font_override("font", _font_sans)
-	title_row.add_child(title_label)
+		_drag_handle.add_theme_font_override("font", _font_sans)
+	drag_row.add_child(_drag_handle)
+
+	_collapse_button = Button.new()
+	_collapse_button.text = "▼"
+	_collapse_button.flat = true
+	_collapse_button.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
+	_collapse_button.add_theme_color_override("font_color", ArcReactor.TEXT_SECONDARY)
+	_collapse_button.add_theme_color_override("font_hover_color", ArcReactor.TEXT_PRIMARY)
+	_collapse_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_collapse_button.pressed.connect(_on_collapse)
+	drag_row.add_child(_collapse_button)
 
 	var close_button := Button.new()
-	close_button.text = "Close"
+	close_button.text = "✕"
+	close_button.flat = true
 	close_button.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
-	if _font_sans:
-		close_button.add_theme_font_override("font", _font_sans)
+	close_button.add_theme_color_override("font_color", ArcReactor.TEXT_SECONDARY)
+	close_button.add_theme_color_override("font_hover_color", ArcReactor.STATUS_ERROR)
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_button.pressed.connect(_on_close)
-	title_row.add_child(close_button)
+	drag_row.add_child(close_button)
+
+	# ─── Body container (collapsible) holds the tabs ─────────────────
+	_body_container = MarginContainer.new()
+	_body_container.add_theme_constant_override("margin_left", ArcReactor.SPACE_MD)
+	_body_container.add_theme_constant_override("margin_right", ArcReactor.SPACE_MD)
+	_body_container.add_theme_constant_override("margin_top", ArcReactor.SPACE_SM)
+	_body_container.add_theme_constant_override("margin_bottom", ArcReactor.SPACE_SM)
+	_body_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_root_vbox.add_child(_body_container)
+
+	var body_vbox := VBoxContainer.new()
+	_body_container.add_child(body_vbox)
+	# Re-target _root_vbox so the existing TabContainer-add code below
+	# still drops the tabs into the body region rather than the drag bar.
+	_root_vbox = body_vbox
 
 	_tab_container = TabContainer.new()
 	_tab_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -330,9 +375,39 @@ func _on_close() -> void:
 	visible = false
 
 
-## Click on the backdrop (anywhere outside the dialog) closes the
-## inspector. mouse_filter STOP on _dialog_panel above keeps clicks
-## inside the dialog from reaching this handler.
-func _on_backdrop_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_on_close()
+# ─── Drag + collapse (same pattern as control_panel.gd) ──────────────────
+
+func _on_drag_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_dragging = true
+			_drag_offset = _dialog_panel.get_global_mouse_position() - _dialog_panel.global_position
+		else:
+			_dragging = false
+	elif event is InputEventMouseMotion and _dragging:
+		# Switch the dialog from CENTER anchors to manual positioning
+		# the first time the user drags it.
+		if not _has_been_dragged:
+			_switch_to_manual_position()
+		_dialog_panel.global_position = _dialog_panel.get_global_mouse_position() - _drag_offset
+
+
+func _switch_to_manual_position() -> void:
+	_has_been_dragged = true
+	var current_pos := _dialog_panel.global_position
+	var current_size := _dialog_panel.size
+	_dialog_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_dialog_panel.global_position = current_pos
+	_dialog_panel.size = current_size
+
+
+func _on_collapse() -> void:
+	_collapsed = not _collapsed
+	if _body_container:
+		_body_container.visible = not _collapsed
+	if _collapse_button:
+		_collapse_button.text = "▶" if _collapsed else "▼"
+	# Force the panel to resize when collapsing so the title strip
+	# isn't padded with the now-empty body's old size.
+	_dialog_panel.size = Vector2.ZERO
+	_dialog_panel.reset_size()
