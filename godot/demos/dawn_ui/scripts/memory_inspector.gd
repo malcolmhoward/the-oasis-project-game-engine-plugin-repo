@@ -156,8 +156,12 @@ func _build_ui() -> void:
 	drag_bar.mouse_filter = Control.MOUSE_FILTER_PASS
 	var drag_style := StyleBoxFlat.new()
 	drag_style.bg_color = ArcReactor.BG_DARK
-	drag_style.set_corner_radius_individual(ArcReactor.RADIUS_MD,
-		ArcReactor.RADIUS_MD, 0, 0)
+	# Round only the top corners so the bar sits flush against the
+	# body region below it.
+	drag_style.corner_radius_top_left = ArcReactor.RADIUS_MD
+	drag_style.corner_radius_top_right = ArcReactor.RADIUS_MD
+	drag_style.corner_radius_bottom_left = 0
+	drag_style.corner_radius_bottom_right = 0
 	drag_style.content_margin_left = ArcReactor.SPACE_MD
 	drag_style.content_margin_right = ArcReactor.SPACE_MD
 	drag_style.content_margin_top = ArcReactor.SPACE_XS
