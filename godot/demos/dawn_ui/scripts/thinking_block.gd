@@ -40,7 +40,7 @@ func _init() -> void:
 	style.content_margin_left = ArcReactor.SPACE_MD
 	style.content_margin_right = ArcReactor.SPACE_MD
 	style.content_margin_top = ArcReactor.SPACE_SM
-	style.content_margin_bottom = ArcReactor.SPACE_SM
+	style.content_margin_bottom = ArcReactor.SPACE_XS
 	add_theme_stylebox_override("panel", style)
 
 	var vbox := VBoxContainer.new()
@@ -92,12 +92,15 @@ func _init() -> void:
 	# Wrap the body label in a MarginContainer so the text has horizontal
 	# padding from the panel's accent border on the left and the panel
 	# edge on the right — mirrors the plan block's step-list padding.
+	# Top/bottom margins are intentionally 0; the panel's own
+	# content_margin_top/bottom already contributes padding, and the
+	# body content was reading "loose" with a doubled bottom margin.
 	var body_margin := MarginContainer.new()
 	body_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body_margin.add_theme_constant_override("margin_left", ArcReactor.SPACE_MD)
 	body_margin.add_theme_constant_override("margin_right", ArcReactor.SPACE_MD)
-	body_margin.add_theme_constant_override("margin_top", ArcReactor.SPACE_XS)
-	body_margin.add_theme_constant_override("margin_bottom", ArcReactor.SPACE_XS)
+	body_margin.add_theme_constant_override("margin_top", 0)
+	body_margin.add_theme_constant_override("margin_bottom", 0)
 	_body_scroll.add_child(body_margin)
 
 	_body_label = RichTextLabel.new()
