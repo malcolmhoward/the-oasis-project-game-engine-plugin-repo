@@ -126,8 +126,8 @@ func _build_ui() -> void:
 	# ─── Dialog panel: starts centred, drag converts to manual pos ───
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_dialog_panel.custom_minimum_size = Vector2(480, 400)
-	_dialog_panel.size = Vector2(480, 400)
+	_dialog_panel.custom_minimum_size = _DEFAULT_DIALOG_SIZE
+	_dialog_panel.size = _DEFAULT_DIALOG_SIZE
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var style := StyleBoxFlat.new()
@@ -405,13 +405,21 @@ func _switch_to_manual_position() -> void:
 	_dialog_panel.size = current_size
 
 
+const _DEFAULT_DIALOG_SIZE := Vector2(480, 400)
+
+
 func _on_collapse() -> void:
 	_collapsed = not _collapsed
 	if _body_container:
 		_body_container.visible = not _collapsed
 	if _collapse_button:
 		_collapse_button.text = "▶" if _collapsed else "▼"
-	# Force the panel to resize when collapsing so the title strip
-	# isn't padded with the now-empty body's old size.
+	# custom_minimum_size pins the panel at 480×400 even when the body
+	# is hidden — clear it so the panel can shrink to the drag bar's
+	# natural height when collapsed, restore it when expanding.
+	if _collapsed:
+		_dialog_panel.custom_minimum_size = Vector2.ZERO
+	else:
+		_dialog_panel.custom_minimum_size = _DEFAULT_DIALOG_SIZE
 	_dialog_panel.size = Vector2.ZERO
 	_dialog_panel.reset_size()
