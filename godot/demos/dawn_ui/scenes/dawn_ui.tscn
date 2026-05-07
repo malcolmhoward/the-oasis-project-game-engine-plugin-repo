@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_ui.gd" id="1"]
 [ext_resource type="Script" path="res://demos/dawn_ui/scripts/dawn_telemetry_rings.gd" id="2"]
+[ext_resource type="Script" path="res://demos/dawn_ui/scripts/llm_controls.gd" id="3"]
 
 [node name="DawnUI" type="Control"]
 layout_mode = 3
@@ -64,6 +65,10 @@ script = ExtResource("2")
 layout_mode = 2
 custom_minimum_size = Vector2(0, 12)
 mouse_filter = 2
+
+[node name="LLMControls" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+script = ExtResource("3")
 
 [node name="InputRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2

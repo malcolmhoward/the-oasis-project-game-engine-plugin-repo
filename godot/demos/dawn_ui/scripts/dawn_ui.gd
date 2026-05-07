@@ -24,6 +24,7 @@ const PlanOrchestratorBlockClass = preload("res://demos/dawn_ui/scripts/plan_orc
 @onready var input_field: LineEdit = $VBox/InputRow/InputField
 @onready var send_button: Button = $VBox/InputRow/SendButton
 @onready var telemetry_rings = $VBox/TelemetryRings  # Phase 2 placeholder Control
+@onready var llm_controls = $VBox/LLMControls         # Phase 4 LLM controls bar
 
 var _mqtt: MQTTBridge = null
 var _dawn_online: bool = false
@@ -250,6 +251,9 @@ func _handle_dawn_event(payload: String) -> void:
 			_on_tool_event(event, msg)
 		"plan_start", "plan_step_update", "plan_end":
 			_on_plan_event(event, msg)
+		"config_update":
+			if llm_controls and llm_controls.has_method("apply_config_update"):
+				llm_controls.apply_config_update(msg)
 		_:
 			# Unknown event — log to stdout for now, not the transcript.
 			print("[DawnUI] unrecognized dawn/events: %s" % event)
