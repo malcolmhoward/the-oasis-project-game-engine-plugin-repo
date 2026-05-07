@@ -90,9 +90,10 @@ func _build_controls() -> void:
 
 	# Cap the popup height so a tall list of models scrolls inside the
 	# popup instead of extending below the DawnUI panel and getting
-	# clipped by the bottom edge. ~4 items fit comfortably; the rest
-	# scroll inside the popup.
-	_model_button.get_popup().max_size = Vector2i(0, 130)
+	# clipped by the bottom edge. 120 px ≈ exactly 4 items visible with
+	# items 5+ accessible via the popup's internal scrollbar; previous
+	# 130 left the 6th item half-clipped at the bottom edge.
+	_model_button.get_popup().max_size = Vector2i(0, 120)
 
 	var temp_text := Label.new()
 	temp_text.text = "Temp"
