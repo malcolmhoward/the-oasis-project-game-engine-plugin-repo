@@ -88,6 +88,11 @@ func _build_controls() -> void:
 	_model_button.item_selected.connect(_on_model_selected)
 	row1.add_child(_model_button)
 
+	# Cap the popup height so a tall list of models scrolls inside the
+	# popup instead of extending below the DawnUI panel and getting
+	# clipped by the bottom edge.
+	_model_button.get_popup().max_size = Vector2i(0, 180)
+
 	var temp_text := Label.new()
 	temp_text.text = "Temp"
 	temp_text.add_theme_color_override("font_color", ArcReactor.TEXT_SECONDARY)
