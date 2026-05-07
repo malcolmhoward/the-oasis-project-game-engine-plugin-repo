@@ -14,9 +14,11 @@ const MessageBubble = preload("res://scripts/message_bubble.gd")
 const ThinkingBlockClass = preload("res://demos/dawn_ui/scripts/thinking_block.gd")
 const ToolCallEntryClass = preload("res://demos/dawn_ui/scripts/tool_call_entry.gd")
 const PlanOrchestratorBlockClass = preload("res://demos/dawn_ui/scripts/plan_orchestrator_block.gd")
+const MemoryInspectorClass = preload("res://demos/dawn_ui/scripts/memory_inspector.gd")
 
 @onready var status_dot: Label = $VBox/Header/StatusDot
 @onready var status_label: Label = $VBox/Header/StatusLabel
+@onready var memory_button: Button = $VBox/Header/MemoryButton
 @onready var connection_label: Label = $VBox/Header/ConnectionLabel
 @onready var transcript_toolbar: HBoxContainer = $VBox/TranscriptToolbar
 @onready var transcript_scroll: ScrollContainer = $VBox/TranscriptScroll
@@ -41,6 +43,9 @@ var _tool_entries: Dictionary = {}
 # Phase 3 — active plan blocks keyed by orchestrator_id so step updates
 # reach the right plan even when multiple plans run interleaved.
 var _plan_blocks: Dictionary = {}
+# Phase 4 — memory inspector window (lazy; built once in _ready, then
+# toggled by the header's Memory button).
+var _memory_inspector = null
 
 
 func _ready() -> void:
@@ -54,6 +59,12 @@ func _ready() -> void:
 		input_field.text_submitted.connect(_on_text_submitted)
 		input_field.keep_editing_on_text_submit = true
 		input_field.grab_focus.call_deferred()
+
+	if memory_button:
+		memory_button.pressed.connect(_on_memory_button_pressed)
+	# Build the memory inspector once and reuse it across opens.
+	_memory_inspector = MemoryInspectorClass.new()
+	add_child(_memory_inspector)
 
 	var oasis_mqtt := get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
@@ -254,6 +265,9 @@ func _handle_dawn_event(payload: String) -> void:
 		"config_update":
 			if llm_controls and llm_controls.has_method("apply_config_update"):
 				llm_controls.apply_config_update(msg)
+		"memory_update":
+			if _memory_inspector and _memory_inspector.has_method("apply_event"):
+				_memory_inspector.apply_event(msg)
 		_:
 			# Unknown event — log to stdout for now, not the transcript.
 			print("[DawnUI] unrecognized dawn/events: %s" % event)
@@ -354,3 +368,10 @@ static func _load_font(path: String) -> Font:
 	if ResourceLoader.exists(path):
 		return load(path)
 	return null
+
+
+# ─── Memory inspector toggle ──────────────────────────────────────────────
+
+func _on_memory_button_pressed() -> void:
+	if _memory_inspector and _memory_inspector.has_method("toggle"):
+		_memory_inspector.toggle()
