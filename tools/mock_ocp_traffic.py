@@ -107,6 +107,133 @@ def main():
     msg_count = [0]  # mutable counter for closure access
     dawn_count = [0]
 
+    # ─── Intent registry ─────────────────────────────────────────────────
+    # Single source of truth for response text, tool calls, and OCP avatar
+    # commands. Both the response matcher and the tool/command firing logic
+    # walk this list, so any keyword that produces a response also produces
+    # the matching tool/command — keyword sets cannot drift the way they
+    # used to when there were two parallel matchers.
+    #
+    # Per-intent fields:
+    #   keywords      list[str]   trigger phrases (substring match against tl)
+    #   response      str | fn    fixed text, or fn(ctx) -> text for dynamic
+    #   tool          dict?       optional tool_call/tool_result payload
+    #                             { name, arguments, result }
+    #   ocp_command   dict?       optional OCP avatar command
+    #                             { action, parameters }
+    def _status_response(ctx):
+        elapsed = _format_elapsed(time.time() - ctx["t0"])
+        return (f"All mock peers online. {ctx['msg_count']} messages "
+                f"published over {elapsed}. D.A.W.N. responded "
+                f"{ctx['dawn_count']} times.")
+
+    INTENTS = [
+        {
+            "keywords": ["hello", "hi", "hey"],
+            "response": ("Hey! I'm D.A.W.N. — Digital Assistant for Workflow "
+                         "Neural-inference. Try 'help' to see what I can do."),
+        },
+        {
+            "keywords": ["help", "what can you do", "commands"],
+            "response": ("I can respond to: 'hello', 'status', 'turn on/off', "
+                         "'who are you', 'peers', 'temperature', 'battery'. "
+                         "Movement: 'move up/down/left/right', "
+                         "'turn left/right', 'jump'."),
+        },
+        {
+            "keywords": ["who are you", "what are you"],
+            "response": ("I'm D.A.W.N. — the AI assistant for the O.A.S.I.S. "
+                         "ecosystem. Right now I'm running as a mock "
+                         "responder."),
+        },
+        {
+            "keywords": ["peer", "online", "who else"],
+            "response": ("4 mock peers online: echo-aura-mock (sensors), "
+                         "echo-stat-mock (system metrics), echo-scope-mock "
+                         "(coordination), echo-dawn-mock (me)."),
+            "tool": {
+                "name": "list_active_peers",
+                "arguments": {"include_simulated": True},
+                "result": {"peers": ["echo-aura-mock", "echo-stat-mock",
+                                     "echo-scope-mock", "echo-dawn-mock"]},
+            },
+        },
+        {
+            "keywords": ["move forward", "go forward", "move up"],
+            "response": "Moving the avatar forward.",
+            "ocp_command": {"action": "move_forward",
+                            "parameters": {"distance": 1.5}},
+        },
+        {
+            "keywords": ["move back", "go back", "move down"],
+            "response": "Moving the avatar backward.",
+            "ocp_command": {"action": "move_back",
+                            "parameters": {"distance": 1.5}},
+        },
+        {
+            "keywords": ["move left", "go left"],
+            "response": "Moving the avatar left.",
+            "ocp_command": {"action": "move_left",
+                            "parameters": {"distance": 1.5}},
+        },
+        {
+            "keywords": ["move right", "go right"],
+            "response": "Moving the avatar right.",
+            "ocp_command": {"action": "move_right",
+                            "parameters": {"distance": 1.5}},
+        },
+        {
+            "keywords": ["turn left"],
+            "response": "Turning the avatar left.",
+            "ocp_command": {"action": "turn_left", "parameters": {}},
+        },
+        {
+            "keywords": ["turn right"],
+            "response": "Turning the avatar right.",
+            "ocp_command": {"action": "turn_right", "parameters": {}},
+        },
+        {
+            "keywords": ["jump"],
+            "response": "The avatar is jumping!",
+            "ocp_command": {"action": "jump", "parameters": {}},
+        },
+        {
+            "keywords": ["turn on"],
+            "response": "Done. Kitchen Lights is now on. (mock)",
+        },
+        {
+            "keywords": ["turn off"],
+            "response": "Done. Kitchen Lights is now off. (mock)",
+        },
+        {
+            "keywords": ["temperature", "temp", "weather"],
+            "response": "Current: 22.5°C, 65% humidity, air quality 85/100. (mock)",
+            "tool": {
+                "name": "read_environmental",
+                "arguments": {"sensor": "enviro",
+                              "fields": ["temp", "humidity", "air_quality"]},
+                "result": {"temp_c": 22.5, "humidity": 65,
+                           "air_quality_aqi": 85},
+            },
+        },
+        {
+            "keywords": ["battery", "power"],
+            "response": "Battery at 85%, 12.4V, discharging. (mock)",
+            "tool": {
+                "name": "read_battery_status",
+                "arguments": {"peer_id": "stat"},
+                "result": {"percentage": 85, "voltage": 12.4,
+                           "charging": False},
+            },
+        },
+        {
+            "keywords": ["status"],
+            "response": _status_response,
+        },
+    ]
+    UNKNOWN_RESPONSE = ("I'm not sure how to help with that. Try 'help' to "
+                        "see what I can do.")
+
     # --- MQTT callbacks (set BEFORE connect) ---
 
     def on_connect(c, u, flags, rc, properties=None):
@@ -147,71 +274,29 @@ def main():
         text = params.get("text") or p.get("value") or p.get("text") or ""
         if not text or p.get("device") == "echo-dawn-mock":
             return
-        r = "I'm not sure how to help with that. Try 'help' to see what I can do."
-        confused = True
-        ocp_command = None  # If set, also publish an OCP command to the avatar
         tl = text.lower()
-        if "hello" in tl or "hi" in tl or "hey" in tl:
-            r = "Hey! I'm D.A.W.N. — Digital Assistant for Workflow Neural-inference. Try 'help' to see what I can do."
+        matched = None
+        for intent in INTENTS:
+            if any(kw in tl for kw in intent["keywords"]):
+                matched = intent
+                break
+
+        if matched is None:
+            r = UNKNOWN_RESPONSE
+            confused = True
+        else:
+            response = matched["response"]
+            if callable(response):
+                r = response({
+                    "text": text,
+                    "msg_count": msg_count[0],
+                    "dawn_count": dawn_count[0],
+                    "t0": t0,
+                })
+            else:
+                r = response
             confused = False
-        elif "help" in tl or "what can you do" in tl or "commands" in tl:
-            r = ("I can respond to: 'hello', 'status', 'turn on/off', "
-                 "'who are you', 'peers', 'temperature', 'battery'. "
-                 "Movement: 'move up/down/left/right', 'turn left/right', 'jump'.")
-            confused = False
-        elif "who are you" in tl or "what are you" in tl:
-            r = ("I'm D.A.W.N. — the AI assistant for the O.A.S.I.S. ecosystem. "
-                 "Right now I'm running as a mock responder.")
-            confused = False
-        elif "peer" in tl or "online" in tl or "who else" in tl:
-            r = ("4 mock peers online: echo-aura-mock (sensors), echo-stat-mock "
-                 "(system metrics), echo-scope-mock (coordination), echo-dawn-mock (me).")
-            confused = False
-        elif "move forward" in tl or "go forward" in tl or "move up" in tl:
-            r = "Moving the avatar forward."
-            confused = False
-            ocp_command = {"action": "move_forward", "parameters": {"distance": 1.5}}
-        elif "move back" in tl or "go back" in tl or "move down" in tl:
-            r = "Moving the avatar backward."
-            confused = False
-            ocp_command = {"action": "move_back", "parameters": {"distance": 1.5}}
-        elif "move left" in tl or "go left" in tl:
-            r = "Moving the avatar left."
-            confused = False
-            ocp_command = {"action": "move_left", "parameters": {"distance": 1.5}}
-        elif "move right" in tl or "go right" in tl:
-            r = "Moving the avatar right."
-            confused = False
-            ocp_command = {"action": "move_right", "parameters": {"distance": 1.5}}
-        elif "turn left" in tl:
-            r = "Turning the avatar left."
-            confused = False
-            ocp_command = {"action": "turn_left", "parameters": {}}
-        elif "turn right" in tl:
-            r = "Turning the avatar right."
-            confused = False
-            ocp_command = {"action": "turn_right", "parameters": {}}
-        elif "jump" in tl:
-            r = "The avatar is jumping!"
-            confused = False
-            ocp_command = {"action": "jump", "parameters": {}}
-        elif "turn on" in tl:
-            r = "Done. Kitchen Lights is now on. (mock)"
-            confused = False
-        elif "turn off" in tl:
-            r = "Done. Kitchen Lights is now off. (mock)"
-            confused = False
-        elif "temperature" in tl or "temp" in tl or "weather" in tl:
-            r = "Current: 22.5°C, 65% humidity, air quality 85/100. (mock)"
-            confused = False
-        elif "battery" in tl or "power" in tl:
-            r = "Battery at 85%, 12.4V, discharging. (mock)"
-            confused = False
-        elif "status" in tl:
-            elapsed = _format_elapsed(time.time() - t0)
-            r = (f"All mock peers online. {msg_count[0]} messages published "
-                 f"over {elapsed}. D.A.W.N. responded {dawn_count[0]} times.")
-            confused = False
+        ocp_command = matched.get("ocp_command") if matched else None
         # Publish a dawn/events metrics_update payload that approximates the
         # response cost so the Godot DAWN UI's telemetry rings show movement.
         # TTFT scales loosely with response length; token rate stays in a
@@ -263,49 +348,29 @@ def main():
                 "timestamp": int(time.time() * 1000),
             }))
 
-        # Phase 3 demo: emit a synthetic tool call/result pair on certain
-        # intents so the Godot transcript shows the purple tool-execution
-        # entry. Keyword sets MUST match the response matchers above so
-        # any phrasing that gets a substantive response also gets a tool
-        # entry — otherwise users see "DAWN answered, but no tool fired"
-        # for what feels like the same question.
-        tool_invocation = None
-        if "temperature" in tl or "temp" in tl or "weather" in tl:
-            tool_invocation = (
-                "read_environmental",
-                {"sensor": "enviro", "fields": ["temp", "humidity", "air_quality"]},
-                {"temp_c": 22.5, "humidity": 65, "air_quality_aqi": 85},
-            )
-        elif "battery" in tl or "power" in tl:
-            tool_invocation = (
-                "read_battery_status",
-                {"peer_id": "stat"},
-                {"percentage": 85, "voltage": 12.4, "charging": False},
-            )
-        elif "peer" in tl or "online" in tl or "who else" in tl:
-            tool_invocation = (
-                "list_active_peers",
-                {"include_simulated": True},
-                {"peers": ["echo-aura-mock", "echo-stat-mock", "echo-scope-mock", "echo-dawn-mock"]},
-            )
-        if tool_invocation is not None:
-            t_name, t_args, t_result = tool_invocation
+        # Phase 3 demo: emit a synthetic tool call/result pair from the
+        # matched intent's "tool" field. Keyword coupling is structural —
+        # the matcher and the firing logic both walk INTENTS, so any
+        # response that's bound to a tool fires that tool, regardless of
+        # which keyword alias the user typed.
+        tool_def = matched.get("tool") if matched else None
+        if tool_def is not None:
             call_id = "call-%d" % dawn_count[0]
             c.publish("dawn/events", json.dumps({
                 "device": "dawn", "msg_type": "event",
                 "event": "tool_call",
                 "call_id": call_id,
-                "tool_name": t_name,
-                "arguments": t_args,
+                "tool_name": tool_def["name"],
+                "arguments": tool_def["arguments"],
                 "timestamp": int(time.time() * 1000),
             }))
             c.publish("dawn/events", json.dumps({
                 "device": "dawn", "msg_type": "event",
                 "event": "tool_result",
                 "call_id": call_id,
-                "tool_name": t_name,
-                "result": t_result,
-                "duration_ms": 150 + len(t_name) * 4,
+                "tool_name": tool_def["name"],
+                "result": tool_def["result"],
+                "duration_ms": 150 + len(tool_def["name"]) * 4,
                 "timestamp": int(time.time() * 1000),
             }))
         # Publish DAWN response
