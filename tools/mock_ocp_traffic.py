@@ -121,6 +121,10 @@ def main():
     #                             { name, arguments, result }
     #   ocp_command   dict?       optional OCP avatar command
     #                             { action, parameters }
+    #   plan          dict?       optional plan orchestrator scenario
+    #                             { steps: [{name, description}],
+    #                               outcomes: ["success"|"error", ...],
+    #                               summary: str }
     def _status_response(ctx):
         elapsed = _format_elapsed(time.time() - ctx["t0"])
         return (f"All mock peers online. {ctx['msg_count']} messages "
@@ -229,6 +233,27 @@ def main():
         {
             "keywords": ["status"],
             "response": _status_response,
+        },
+        {
+            "keywords": ["check the suit", "diagnose", "diagnostic", "self test", "self-test"],
+            "response": ("Running suit diagnostic — kicked off a 4-step "
+                         "check across A.U.R.A., S.T.A.T., M.I.R.A.G.E., "
+                         "and the broker."),
+            "plan": {
+                "steps": [
+                    {"name": "Verify MQTT broker reachable",
+                     "description": "ping localhost:1883"},
+                    {"name": "Read A.U.R.A. heartbeat",
+                     "description": "expect aura/status retained"},
+                    {"name": "Read S.T.A.T. metrics snapshot",
+                     "description": "battery + system temp"},
+                    {"name": "Confirm M.I.R.A.G.E. peer alive",
+                     "description": "hud/status retained"},
+                ],
+                # outcomes correspond 1:1 with steps; "success" or "error".
+                "outcomes": ["success", "success", "success", "success"],
+                "summary": "all systems nominal",
+            },
         },
     ]
     UNKNOWN_RESPONSE = ("I'm not sure how to help with that. Try 'help' to "
@@ -371,6 +396,53 @@ def main():
                 "tool_name": tool_def["name"],
                 "result": tool_def["result"],
                 "duration_ms": 150 + len(tool_def["name"]) * 4,
+                "timestamp": int(time.time() * 1000),
+            }))
+
+        # Phase 3 demo: emit a synthetic plan_start / plan_step_update* /
+        # plan_end sequence from the matched intent's "plan" field. Steps
+        # update with a small staggered delay (~80 ms each) so the user
+        # sees them flip RUNNING → DONE in the transcript. Outcomes list
+        # is parallel to steps; "error" steps render with the red glyph.
+        plan_def = matched.get("plan") if matched else None
+        if plan_def is not None:
+            orch_id = "plan-%d" % dawn_count[0]
+            steps = plan_def["steps"]
+            outcomes = plan_def.get("outcomes", ["success"] * len(steps))
+            c.publish("dawn/events", json.dumps({
+                "device": "dawn", "msg_type": "event",
+                "event": "plan_start",
+                "orchestrator_id": orch_id,
+                "steps": steps,
+                "timestamp": int(time.time() * 1000),
+            }))
+            for i in range(len(steps)):
+                # running → outcome, with a small per-step delay so the
+                # transcript shows progress instead of an instant flip.
+                c.publish("dawn/events", json.dumps({
+                    "device": "dawn", "msg_type": "event",
+                    "event": "plan_step_update",
+                    "orchestrator_id": orch_id,
+                    "step_index": i,
+                    "status": "running",
+                    "timestamp": int(time.time() * 1000),
+                }))
+                time.sleep(0.08)
+                c.publish("dawn/events", json.dumps({
+                    "device": "dawn", "msg_type": "event",
+                    "event": "plan_step_update",
+                    "orchestrator_id": orch_id,
+                    "step_index": i,
+                    "status": outcomes[i] if i < len(outcomes) else "success",
+                    "timestamp": int(time.time() * 1000),
+                }))
+                time.sleep(0.04)
+            c.publish("dawn/events", json.dumps({
+                "device": "dawn", "msg_type": "event",
+                "event": "plan_end",
+                "orchestrator_id": orch_id,
+                "summary": plan_def.get("summary", ""),
+                "duration_ms": (len(steps) * 120) + 200,
                 "timestamp": int(time.time() * 1000),
             }))
         # Publish DAWN response
