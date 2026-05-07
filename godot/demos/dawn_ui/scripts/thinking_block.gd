@@ -81,6 +81,10 @@ func _init() -> void:
 
 	_body_scroll = ScrollContainer.new()
 	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# SHRINK_BEGIN so the scroll wraps content tightly instead of inheriting
+	# extra height from the parent VBox / PanelContainer fill behaviour —
+	# without this, short thinking traces leave dead space at the bottom.
+	_body_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_body_scroll.custom_minimum_size = Vector2(0, 0)
 	vbox.add_child(_body_scroll)
