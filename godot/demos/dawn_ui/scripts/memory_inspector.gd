@@ -1,9 +1,16 @@
 ## D.A.W.N. memory inspector (Phase 4).
 ##
-## Toggleable Window that mirrors the web UI's memory popover. Five
-## tabs — facts, preferences, summaries, entities, contacts — each
-## with a search box and a scrollable item list. Built entirely in
-## code (no .tscn) so the inspector ships as a single file.
+## Toggleable Control overlay that mirrors the web UI's memory popover.
+## Five tabs — facts, preferences, summaries, entities, contacts —
+## each with a search box and a scrollable item list. Built entirely
+## in code (no .tscn) so the inspector ships as a single file.
+##
+## Implementation note: previously a Window subclass, but Godot 4
+## embedded sub-windows render their contents through a sub-viewport
+## with default linear-filter blitting back to the parent — text
+## came out fuzzy. Reimplemented as a Control overlay (a dim full-
+## rect ColorRect backdrop with a centred Panel) so the text renders
+## directly into the host viewport at 1:1 resolution.
 ##
 ## Subscribes implicitly via dawn_ui's event router for the demo:
 ##   dawn/events with event=memory_update overwrites the named
@@ -15,7 +22,7 @@
 ## If no memory_update arrives, each tab displays the static seed data
 ## defined in MOCK_SEEDS so the inspector reads as populated during
 ## stakeholder demos.
-extends Window
+extends Control
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
 
@@ -68,27 +75,19 @@ const MOCK_SEEDS := {
 var _state: Dictionary = {}
 var _root_vbox: VBoxContainer = null
 var _tab_container: TabContainer = null
-# Project fonts loaded once and reused. Applying them avoids the
-# blurry fallback that Godot's default theme uses inside an embedded
-# sub-window.
+var _backdrop: ColorRect = null
+var _dialog_panel: PanelContainer = null
+# Project fonts loaded once and reused.
 var _font_sans: Font = null
 var _font_mono: Font = null
 
 
-func _init() -> void:
-	title = "D.A.W.N. Memory"
-	min_size = Vector2i(420, 320)
-	size = Vector2i(440, 360)
-	# Embedded sub-window — sits inside the host Godot window rather
-	# than as an OS-level window.
-	transient = true
-	unresizable = false
-	exclusive = false
-	visible = false
-	close_requested.connect(_on_close)
-
-
 func _ready() -> void:
+	# Fill the entire DawnUI panel; visible only when toggled.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	visible = false
+
 	_load_project_fonts()
 	_build_ui()
 	# Seed each tab with mock data so the inspector reads populated
@@ -107,21 +106,63 @@ func _load_project_fonts() -> void:
 # ─── UI construction ──────────────────────────────────────────────────────
 
 func _build_ui() -> void:
-	var bg := PanelContainer.new()
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# ─── Backdrop: dim full-rect ColorRect, click to dismiss ─────────
+	_backdrop = ColorRect.new()
+	_backdrop.color = Color(0, 0, 0, 0.55)
+	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	_backdrop.gui_input.connect(_on_backdrop_input)
+	add_child(_backdrop)
+
+	# ─── Dialog panel: centred, fixed-ish size, holds the tabs ───────
+	_dialog_panel = PanelContainer.new()
+	_dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_dialog_panel.custom_minimum_size = Vector2(440, 360)
+	_dialog_panel.size = Vector2(440, 360)
+	# Re-centre after layout settles so the panel position is correct
+	# regardless of how the parent resizes between toggles.
+	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+
 	var style := StyleBoxFlat.new()
 	style.bg_color = ArcReactor.BG_DEEPEST
-	style.set_corner_radius_all(0)
+	style.border_color = ArcReactor.ARC_BORDER
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.set_corner_radius_all(ArcReactor.RADIUS_MD)
 	style.content_margin_left = ArcReactor.SPACE_MD
 	style.content_margin_right = ArcReactor.SPACE_MD
 	style.content_margin_top = ArcReactor.SPACE_SM
 	style.content_margin_bottom = ArcReactor.SPACE_SM
-	bg.add_theme_stylebox_override("panel", style)
-	add_child(bg)
+	_dialog_panel.add_theme_stylebox_override("panel", style)
+	add_child(_dialog_panel)
 
 	_root_vbox = VBoxContainer.new()
 	_root_vbox.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
-	bg.add_child(_root_vbox)
+	_dialog_panel.add_child(_root_vbox)
+
+	# ─── Title bar with close button ─────────────────────────────────
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	_root_vbox.add_child(title_row)
+
+	var title_label := Label.new()
+	title_label.text = "D.A.W.N. Memory"
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.add_theme_color_override("font_color", ArcReactor.ARC_CORE)
+	title_label.add_theme_font_size_override("font_size", ArcReactor.FONT_SUBHEAD)
+	if _font_sans:
+		title_label.add_theme_font_override("font", _font_sans)
+	title_row.add_child(title_label)
+
+	var close_button := Button.new()
+	close_button.text = "Close"
+	close_button.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
+	if _font_sans:
+		close_button.add_theme_font_override("font", _font_sans)
+	close_button.pressed.connect(_on_close)
+	title_row.add_child(close_button)
 
 	_tab_container = TabContainer.new()
 	_tab_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -208,17 +249,10 @@ func _build_category_tab(category: String) -> Control:
 
 # ─── Public API ───────────────────────────────────────────────────────────
 
-## Toggle the inspector window's visibility. Centre it on the host
-## window's viewport on first open so it doesn't appear off-screen.
+## Toggle the inspector overlay's visibility. The dialog panel is
+## anchored CENTER so re-centring on toggle is automatic.
 func toggle() -> void:
-	if visible:
-		hide()
-	else:
-		var viewport_rect := get_tree().root.get_visible_rect() as Rect2
-		var pos := Vector2i(
-			viewport_rect.position + (viewport_rect.size - Vector2(size)) * 0.5)
-		position = pos
-		show()
+	visible = not visible
 
 
 ## Apply a memory_update payload arriving on dawn/events.
@@ -286,4 +320,12 @@ func _on_item_selected(category: String, index: int) -> void:
 
 
 func _on_close() -> void:
-	hide()
+	visible = false
+
+
+## Click on the backdrop (anywhere outside the dialog) closes the
+## inspector. mouse_filter STOP on _dialog_panel above keeps clicks
+## inside the dialog from reaching this handler.
+func _on_backdrop_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_on_close()
