@@ -16,14 +16,16 @@ const ArcReactor = preload("res://resources/design_tokens.gd")
 const TOOL_MODES := ["auto", "always", "never"]
 
 # Default model list. Real D.A.W.N. would emit a config_update on connect
-# to overwrite this. Models cover the three providers DAWN supports.
+# to overwrite this. Each entry is [display_name, model_id] so the
+# OptionButton stays compact while the published command uses the full
+# canonical model id.
 const DEFAULT_MODELS := [
-	"claude-opus-4-7",
-	"claude-sonnet-4-6",
-	"claude-haiku-4-5",
-	"gpt-4.1",
-	"gpt-4o-mini",
-	"gemini-2.5-pro",
+	["Opus 4.7",   "claude-opus-4-7"],
+	["Sonnet 4.6", "claude-sonnet-4-6"],
+	["Haiku 4.5",  "claude-haiku-4-5"],
+	["GPT-4.1",    "gpt-4.1"],
+	["GPT-4o m",   "gpt-4o-mini"],
+	["Gemini 2.5", "gemini-2.5-pro"],
 ]
 
 signal config_changed(field: String, value: Variant)
@@ -58,32 +60,39 @@ func _style_panel() -> void:
 
 
 func _build_controls() -> void:
-	var hbox := HBoxContainer.new()
-	hbox.name = "HBox"
-	hbox.add_theme_constant_override("separation", ArcReactor.SPACE_MD)
-	add_child(hbox)
+	# Two-row stack so the bar fits at the DawnUI panel's typical width
+	# (~480 px in the demo). Row 1: model + temperature. Row 2: tools.
+	var vbox := VBoxContainer.new()
+	vbox.name = "VBox"
+	vbox.add_theme_constant_override("separation", ArcReactor.SPACE_XS)
+	add_child(vbox)
 
-	# ─── Model select ────────────────────────────────────────────────
+	# ─── Row 1: Model select + Temperature slider ────────────────────
+	var row1 := HBoxContainer.new()
+	row1.name = "Row1"
+	row1.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	vbox.add_child(row1)
+
 	var model_label := Label.new()
 	model_label.text = "Model"
 	model_label.add_theme_color_override("font_color", ArcReactor.TEXT_SECONDARY)
 	model_label.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
-	hbox.add_child(model_label)
+	row1.add_child(model_label)
 
 	_model_button = OptionButton.new()
 	_model_button.flat = false
+	_model_button.fit_to_longest_item = true
 	_model_button.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
-	for model_name in DEFAULT_MODELS:
-		_model_button.add_item(model_name)
+	for entry in DEFAULT_MODELS:
+		_model_button.add_item(entry[0])  # display name only
 	_model_button.item_selected.connect(_on_model_selected)
-	hbox.add_child(_model_button)
+	row1.add_child(_model_button)
 
-	# ─── Temperature slider ──────────────────────────────────────────
 	var temp_text := Label.new()
 	temp_text.text = "Temp"
 	temp_text.add_theme_color_override("font_color", ArcReactor.TEXT_SECONDARY)
 	temp_text.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
-	hbox.add_child(temp_text)
+	row1.add_child(temp_text)
 
 	_temp_slider = HSlider.new()
 	_temp_slider.min_value = 0.0
@@ -91,23 +100,28 @@ func _build_controls() -> void:
 	_temp_slider.step = 0.05
 	_temp_slider.value = 0.7
 	_temp_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_temp_slider.custom_minimum_size = Vector2(120, 0)
+	_temp_slider.custom_minimum_size = Vector2(60, 0)
 	_temp_slider.value_changed.connect(_on_temp_changed)
-	hbox.add_child(_temp_slider)
+	row1.add_child(_temp_slider)
 
 	_temp_label = Label.new()
 	_temp_label.text = "0.70"
 	_temp_label.add_theme_color_override("font_color", ArcReactor.TEXT_PRIMARY)
 	_temp_label.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
 	_temp_label.custom_minimum_size = Vector2(36, 0)
-	hbox.add_child(_temp_label)
+	row1.add_child(_temp_label)
 
-	# ─── Tool-mode radio ─────────────────────────────────────────────
+	# ─── Row 2: Tool-mode radio ──────────────────────────────────────
+	var row2 := HBoxContainer.new()
+	row2.name = "Row2"
+	row2.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	vbox.add_child(row2)
+
 	var tool_text := Label.new()
 	tool_text.text = "Tools"
 	tool_text.add_theme_color_override("font_color", ArcReactor.TEXT_SECONDARY)
 	tool_text.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
-	hbox.add_child(tool_text)
+	row2.add_child(tool_text)
 
 	var tool_group := ButtonGroup.new()
 	for mode in TOOL_MODES:
@@ -115,10 +129,11 @@ func _build_controls() -> void:
 		btn.text = mode
 		btn.toggle_mode = true
 		btn.button_group = tool_group
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
 		btn.button_pressed = (mode == "auto")
 		btn.pressed.connect(_on_tool_mode_selected.bind(mode))
-		hbox.add_child(btn)
+		row2.add_child(btn)
 		_tool_mode_buttons[mode] = btn
 
 
@@ -127,9 +142,11 @@ func _build_controls() -> void:
 func _on_model_selected(index: int) -> void:
 	if _muted:
 		return
-	var name: String = _model_button.get_item_text(index)
-	_publish_set_config({"model": name})
-	config_changed.emit("model", name)
+	if index < 0 or index >= DEFAULT_MODELS.size():
+		return
+	var model_id: String = DEFAULT_MODELS[index][1]  # canonical id
+	_publish_set_config({"model": model_id})
+	config_changed.emit("model", model_id)
 
 
 func _on_temp_changed(value: float) -> void:
@@ -166,9 +183,11 @@ func _publish_set_config(parameters: Dictionary) -> void:
 func apply_config_update(payload: Dictionary) -> void:
 	_muted = true
 	if payload.has("model"):
-		var model: String = str(payload["model"])
-		for i in range(_model_button.item_count):
-			if _model_button.get_item_text(i) == model:
+		var model_id: String = str(payload["model"])
+		# Match against canonical id in the registry; the OptionButton
+		# only carries the display name so we can't compare against it.
+		for i in range(DEFAULT_MODELS.size()):
+			if DEFAULT_MODELS[i][1] == model_id:
 				_model_button.select(i)
 				break
 	if payload.has("temperature"):
