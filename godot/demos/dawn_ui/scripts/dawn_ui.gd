@@ -13,6 +13,7 @@ const ArcReactor = preload("res://resources/design_tokens.gd")
 const MessageBubble = preload("res://scripts/message_bubble.gd")
 const ThinkingBlockClass = preload("res://demos/dawn_ui/scripts/thinking_block.gd")
 const ToolCallEntryClass = preload("res://demos/dawn_ui/scripts/tool_call_entry.gd")
+const PlanOrchestratorBlockClass = preload("res://demos/dawn_ui/scripts/plan_orchestrator_block.gd")
 
 @onready var status_dot: Label = $VBox/Header/StatusDot
 @onready var status_label: Label = $VBox/Header/StatusLabel
@@ -36,6 +37,9 @@ var _thinking_blocks: Dictionary = {}
 # Phase 3 — active tool entries keyed by call_id so tool_result lands on
 # the matching entry even when multiple tools run interleaved.
 var _tool_entries: Dictionary = {}
+# Phase 3 — active plan blocks keyed by orchestrator_id so step updates
+# reach the right plan even when multiple plans run interleaved.
+var _plan_blocks: Dictionary = {}
 
 
 func _ready() -> void:
@@ -312,9 +316,34 @@ func _on_tool_event(event: String, msg: Dictionary) -> void:
 			_tool_entries.erase(call_id)
 
 
-func _on_plan_event(event: String, _msg: Dictionary) -> void:
-	# TODO Phase 3: vertical step list with status-coloured indicators.
-	pass
+func _on_plan_event(event: String, msg: Dictionary) -> void:
+	var orch_id: String = str(msg.get("orchestrator_id", ""))
+	if orch_id.is_empty():
+		return
+	match event:
+		"plan_start":
+			var block: PlanOrchestratorBlockClass = PlanOrchestratorBlockClass.new()
+			if transcript_box:
+				transcript_box.add_child(block)
+			block.start(orch_id, msg.get("steps", []))
+			_plan_blocks[orch_id] = block
+			_scroll_to_bottom.call_deferred()
+		"plan_step_update":
+			var existing = _plan_blocks.get(orch_id)
+			if existing and is_instance_valid(existing):
+				existing.update_step(
+					int(msg.get("step_index", -1)),
+					str(msg.get("status", "running")),
+					str(msg.get("note", ""))
+				)
+		"plan_end":
+			var ending = _plan_blocks.get(orch_id)
+			if ending and is_instance_valid(ending):
+				ending.finish(
+					str(msg.get("summary", "")),
+					int(msg.get("duration_ms", 0))
+				)
+			_plan_blocks.erase(orch_id)
 
 
 static func _load_font(path: String) -> Font:
