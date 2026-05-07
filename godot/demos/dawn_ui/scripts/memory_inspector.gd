@@ -87,6 +87,7 @@ var _collapsed: bool = false
 var _has_been_dragged: bool = false  # switch from CENTER anchors to manual on first drag
 # Project fonts loaded once and reused.
 var _font_sans: Font = null
+var _font_sans_bold: Font = null
 var _font_mono: Font = null
 
 
@@ -105,6 +106,11 @@ func _ready() -> void:
 func _load_project_fonts() -> void:
 	if ResourceLoader.exists(ArcReactor.FONT_SANS_PATH):
 		_font_sans = load(ArcReactor.FONT_SANS_PATH)
+	# Bold variant — RichTextLabel needs it explicitly when BBCode
+	# uses [b], otherwise bold falls back to a default font that
+	# renders blurry against the rest of the dialog.
+	if ResourceLoader.exists(ArcReactor.FONT_SANS_BOLD):
+		_font_sans_bold = load(ArcReactor.FONT_SANS_BOLD)
 	if ResourceLoader.exists(ArcReactor.FONT_MONO_PATH):
 		_font_mono = load(ArcReactor.FONT_MONO_PATH)
 
@@ -295,8 +301,14 @@ func _build_category_tab(category: String) -> Control:
 	detail.selection_enabled = true
 	detail.add_theme_color_override("default_color", ArcReactor.TEXT_SECONDARY)
 	detail.add_theme_font_size_override("normal_font_size", ArcReactor.FONT_SMALL)
+	detail.add_theme_font_size_override("bold_font_size", ArcReactor.FONT_SMALL)
 	if _font_sans:
 		detail.add_theme_font_override("normal_font", _font_sans)
+	# Bold font for the [b]title[/b] in the detail body — without this
+	# the bold text falls back to a system font that reads blurry
+	# next to the regular Source Sans body.
+	if _font_sans_bold:
+		detail.add_theme_font_override("bold_font", _font_sans_bold)
 	content.add_child(detail)
 	_state[category]["detail"] = detail
 
