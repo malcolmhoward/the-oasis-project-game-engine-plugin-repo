@@ -5,12 +5,13 @@
 ## each with a search box and a scrollable item list. Built entirely
 ## in code (no .tscn) so the inspector ships as a single file.
 ##
-## Implementation note: previously a Window subclass, but Godot 4
-## embedded sub-windows render their contents through a sub-viewport
-## with default linear-filter blitting back to the parent — text
-## came out fuzzy. Reimplemented as a Control overlay (a dim full-
-## rect ColorRect backdrop with a centred Panel) so the text renders
-## directly into the host viewport at 1:1 resolution.
+## Implementation note: previously a Window subclass — Godot 4
+## embedded sub-windows render through a sub-viewport with default
+## linear-filter blitting that made text fuzzy. Then a Control
+## overlay child of DawnUI — text rendered at 1:1 but the dialog got
+## clipped to the DawnUI panel's narrow column. Now a CanvasLayer
+## root so the inspector escapes the parent's clip region while
+## still rendering directly into the host viewport — best of both.
 ##
 ## Subscribes implicitly via dawn_ui's event router for the demo:
 ##   dawn/events with event=memory_update overwrites the named
@@ -22,7 +23,7 @@
 ## If no memory_update arrives, each tab displays the static seed data
 ## defined in MOCK_SEEDS so the inspector reads as populated during
 ## stakeholder demos.
-extends Control
+extends CanvasLayer
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
 
@@ -77,17 +78,16 @@ var _root_vbox: VBoxContainer = null
 var _tab_container: TabContainer = null
 var _backdrop: ColorRect = null
 var _dialog_panel: PanelContainer = null
+var _root_control: Control = null  # full-viewport Control inside the CanvasLayer
 # Project fonts loaded once and reused.
 var _font_sans: Font = null
 var _font_mono: Font = null
 
 
 func _ready() -> void:
-	# Fill the entire DawnUI panel; visible only when toggled.
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	visible = false
-
+	visible = false  # CanvasLayer-level visibility hides everything.
+	# Sit above normal scene Controls; matches typical modal layer.
+	layer = 64
 	_load_project_fonts()
 	_build_ui()
 	# Seed each tab with mock data so the inspector reads populated
@@ -106,21 +106,28 @@ func _load_project_fonts() -> void:
 # ─── UI construction ──────────────────────────────────────────────────────
 
 func _build_ui() -> void:
+	# ─── Root Control: fills the host viewport via the CanvasLayer ───
+	# CanvasLayer renders in viewport coordinates regardless of where
+	# this node sits in the scene tree, so the dialog isn't clipped to
+	# the DawnUI panel's narrow column.
+	_root_control = Control.new()
+	_root_control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_root_control.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_root_control)
+
 	# ─── Backdrop: dim full-rect ColorRect, click to dismiss ─────────
 	_backdrop = ColorRect.new()
 	_backdrop.color = Color(0, 0, 0, 0.55)
 	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	_backdrop.gui_input.connect(_on_backdrop_input)
-	add_child(_backdrop)
+	_root_control.add_child(_backdrop)
 
 	# ─── Dialog panel: centred, fixed-ish size, holds the tabs ───────
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_dialog_panel.custom_minimum_size = Vector2(440, 360)
-	_dialog_panel.size = Vector2(440, 360)
-	# Re-centre after layout settles so the panel position is correct
-	# regardless of how the parent resizes between toggles.
+	_dialog_panel.custom_minimum_size = Vector2(480, 400)
+	_dialog_panel.size = Vector2(480, 400)
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var style := StyleBoxFlat.new()
@@ -136,7 +143,7 @@ func _build_ui() -> void:
 	style.content_margin_top = ArcReactor.SPACE_SM
 	style.content_margin_bottom = ArcReactor.SPACE_SM
 	_dialog_panel.add_theme_stylebox_override("panel", style)
-	add_child(_dialog_panel)
+	_root_control.add_child(_dialog_panel)
 
 	_root_vbox = VBoxContainer.new()
 	_root_vbox.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
