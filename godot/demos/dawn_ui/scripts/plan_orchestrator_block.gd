@@ -78,17 +78,29 @@ func _init() -> void:
 
 	_body_scroll = ScrollContainer.new()
 	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	# Step list grows naturally; cap at the same 140 px ceiling as siblings
 	# so a long plan scrolls inside the block.
 	_body_scroll.custom_minimum_size = Vector2(0, 0)
 	vbox.add_child(_body_scroll)
 
+	# Wrap the step list in a MarginContainer so the rows have left/right
+	# breathing room from the panel's left accent border and right edge,
+	# plus a little top/bottom space inside the scroll viewport.
+	var step_list_margin := MarginContainer.new()
+	step_list_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	step_list_margin.add_theme_constant_override("margin_left", ArcReactor.SPACE_MD)
+	step_list_margin.add_theme_constant_override("margin_right", ArcReactor.SPACE_MD)
+	step_list_margin.add_theme_constant_override("margin_top", ArcReactor.SPACE_XS)
+	step_list_margin.add_theme_constant_override("margin_bottom", ArcReactor.SPACE_XS)
+	_body_scroll.add_child(step_list_margin)
+
 	_step_list = VBoxContainer.new()
 	_step_list.name = "StepList"
 	_step_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_step_list.add_theme_constant_override("separation", ArcReactor.SPACE_XS)
-	_body_scroll.add_child(_step_list)
+	step_list_margin.add_child(_step_list)
 
 
 ## Initialise from a plan_start event. `steps` is an array of either
