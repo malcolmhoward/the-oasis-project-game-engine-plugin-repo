@@ -68,6 +68,11 @@ const MOCK_SEEDS := {
 var _state: Dictionary = {}
 var _root_vbox: VBoxContainer = null
 var _tab_container: TabContainer = null
+# Project fonts loaded once and reused. Applying them avoids the
+# blurry fallback that Godot's default theme uses inside an embedded
+# sub-window.
+var _font_sans: Font = null
+var _font_mono: Font = null
 
 
 func _init() -> void:
@@ -84,11 +89,19 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	_load_project_fonts()
 	_build_ui()
 	# Seed each tab with mock data so the inspector reads populated
 	# from the moment it's first opened.
 	for category in CATEGORIES:
 		_apply_items(category, MOCK_SEEDS.get(category, []))
+
+
+func _load_project_fonts() -> void:
+	if ResourceLoader.exists(ArcReactor.FONT_SANS_PATH):
+		_font_sans = load(ArcReactor.FONT_SANS_PATH)
+	if ResourceLoader.exists(ArcReactor.FONT_MONO_PATH):
+		_font_mono = load(ArcReactor.FONT_MONO_PATH)
 
 
 # ─── UI construction ──────────────────────────────────────────────────────
@@ -113,6 +126,15 @@ func _build_ui() -> void:
 	_tab_container = TabContainer.new()
 	_tab_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tab_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Pin the tab text styling so the tab strip renders at a known
+	# resolution rather than falling back to a default font that
+	# rendered blurry inside the embedded sub-window.
+	_tab_container.add_theme_font_size_override("font_size", ArcReactor.FONT_BODY)
+	_tab_container.add_theme_color_override("font_selected_color", ArcReactor.TEXT_PRIMARY)
+	_tab_container.add_theme_color_override("font_unselected_color", ArcReactor.TEXT_SECONDARY)
+	_tab_container.add_theme_color_override("font_hovered_color", ArcReactor.ARC_CORE)
+	if _font_sans:
+		_tab_container.add_theme_font_override("font", _font_sans)
 	_root_vbox.add_child(_tab_container)
 
 	for category in CATEGORIES:
@@ -129,15 +151,29 @@ func _build_ui() -> void:
 
 
 func _build_category_tab(category: String) -> Control:
-	var page := VBoxContainer.new()
+	# MarginContainer at the page root so the tab content has breathing
+	# room from the TabContainer's tab strip on top and the panel
+	# chrome on the sides — the tab text was reading flush against the
+	# search box without it.
+	var page := MarginContainer.new()
 	page.name = category.capitalize()
-	page.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	page.add_theme_constant_override("margin_left", ArcReactor.SPACE_SM)
+	page.add_theme_constant_override("margin_right", ArcReactor.SPACE_SM)
+	page.add_theme_constant_override("margin_top", ArcReactor.SPACE_MD)
+	page.add_theme_constant_override("margin_bottom", ArcReactor.SPACE_SM)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", ArcReactor.SPACE_SM)
+	page.add_child(content)
 
 	# Search box
 	var search := LineEdit.new()
 	search.placeholder_text = "Search %s…" % category
+	search.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
+	if _font_sans:
+		search.add_theme_font_override("font", _font_sans)
 	search.text_changed.connect(func(t: String): _on_search_changed(category, t))
-	page.add_child(search)
+	content.add_child(search)
 	_state[category]["search"] = search
 
 	# Item list (top half) + detail viewer (bottom half) split.
@@ -145,8 +181,11 @@ func _build_category_tab(category: String) -> Control:
 	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	list.size_flags_stretch_ratio = 2.0
 	list.add_theme_color_override("font_color", ArcReactor.TEXT_PRIMARY)
+	list.add_theme_font_size_override("font_size", ArcReactor.FONT_SMALL)
+	if _font_sans:
+		list.add_theme_font_override("font", _font_sans)
 	list.item_selected.connect(func(idx: int): _on_item_selected(category, idx))
-	page.add_child(list)
+	content.add_child(list)
 	_state[category]["list"] = list
 
 	var detail := RichTextLabel.new()
@@ -159,7 +198,9 @@ func _build_category_tab(category: String) -> Control:
 	detail.selection_enabled = true
 	detail.add_theme_color_override("default_color", ArcReactor.TEXT_SECONDARY)
 	detail.add_theme_font_size_override("normal_font_size", ArcReactor.FONT_SMALL)
-	page.add_child(detail)
+	if _font_sans:
+		detail.add_theme_font_override("normal_font", _font_sans)
+	content.add_child(detail)
 	_state[category]["detail"] = detail
 
 	return page
