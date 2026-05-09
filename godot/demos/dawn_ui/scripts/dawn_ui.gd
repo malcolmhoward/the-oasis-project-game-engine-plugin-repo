@@ -16,11 +16,13 @@ const ToolCallEntryClass = preload("res://demos/dawn_ui/scripts/tool_call_entry.
 const PlanOrchestratorBlockClass = preload("res://demos/dawn_ui/scripts/plan_orchestrator_block.gd")
 const MemoryInspectorClass = preload("res://demos/dawn_ui/scripts/memory_inspector.gd")
 const ConversationHistorySidebarClass = preload("res://demos/dawn_ui/scripts/conversation_history_sidebar.gd")
+const SettingsPanelClass = preload("res://demos/dawn_ui/scripts/settings_panel.gd")
 
 @onready var status_dot: Label = $VBox/Header/StatusDot
 @onready var status_label: Label = $VBox/Header/StatusLabel
 @onready var memory_button: Button = $VBox/Header/MemoryButton
 @onready var history_button: Button = $VBox/Header/HistoryButton
+@onready var settings_button: Button = $VBox/Header/SettingsButton
 @onready var connection_label: Label = $VBox/Header/ConnectionLabel
 @onready var transcript_toolbar: HBoxContainer = $VBox/TranscriptToolbar
 @onready var transcript_scroll: ScrollContainer = $VBox/TranscriptScroll
@@ -50,6 +52,8 @@ var _plan_blocks: Dictionary = {}
 var _memory_inspector = null
 # Phase 4 — conversation history sidebar (file-backed JSON in user://).
 var _history_sidebar = null
+# Phase 4 — settings panel (audio + LLM tabs).
+var _settings_panel = null
 
 
 func _ready() -> void:
@@ -75,6 +79,11 @@ func _ready() -> void:
 	_history_sidebar = ConversationHistorySidebarClass.new()
 	add_child(_history_sidebar)
 	_history_sidebar.conversation_switched.connect(_on_conversation_switched)
+
+	if settings_button:
+		settings_button.pressed.connect(_on_settings_button_pressed)
+	_settings_panel = SettingsPanelClass.new()
+	add_child(_settings_panel)
 
 	var oasis_mqtt := get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
@@ -282,6 +291,9 @@ func _handle_dawn_event(payload: String) -> void:
 		"memory_update":
 			if _memory_inspector and _memory_inspector.has_method("apply_event"):
 				_memory_inspector.apply_event(msg)
+		"setting_update":
+			if _settings_panel and _settings_panel.has_method("apply_event"):
+				_settings_panel.apply_event(msg)
 		_:
 			# Unknown event — log to stdout for now, not the transcript.
 			print("[DawnUI] unrecognized dawn/events: %s" % event)
@@ -396,6 +408,11 @@ func _on_memory_button_pressed() -> void:
 func _on_history_button_pressed() -> void:
 	if _history_sidebar and _history_sidebar.has_method("toggle"):
 		_history_sidebar.toggle()
+
+
+func _on_settings_button_pressed() -> void:
+	if _settings_panel and _settings_panel.has_method("toggle"):
+		_settings_panel.toggle()
 
 
 ## Called when the user switches to a different past conversation in
