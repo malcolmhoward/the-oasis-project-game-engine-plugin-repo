@@ -43,6 +43,10 @@ text = "History"
 layout_mode = 2
 text = "Memory"
 
+[node name="SettingsButton" type="Button" parent="VBox/Header"]
+layout_mode = 2
+text = "Settings"
+
 [node name="ConnectionLabel" type="Label" parent="VBox/Header"]
 layout_mode = 2
 text = "WAITING"
