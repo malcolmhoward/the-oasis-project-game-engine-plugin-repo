@@ -76,7 +76,7 @@ var _state: Dictionary = {}
 var _root_vbox: VBoxContainer = null
 var _tab_container: TabContainer = null
 var _dialog_panel: PanelContainer = null
-var _root_control: Control = null  # full-viewport Control inside the CanvasLayer
+var _root_control: Control = null  # legacy; dialog now sits directly under the CanvasLayer
 var _body_container: Control = null  # collapsible content under the title bar
 var _drag_handle: Label = null
 var _collapse_button: Button = null
@@ -133,21 +133,15 @@ func _load_project_fonts() -> void:
 # ─── UI construction ──────────────────────────────────────────────────────
 
 func _build_ui() -> void:
-	# ─── Root Control: fills the host viewport via the CanvasLayer ───
-	# CanvasLayer renders in viewport coordinates regardless of where
-	# this node sits in the scene tree, so the dialog isn't clipped to
-	# the DawnUI panel's narrow column.
-	_root_control = Control.new()
-	_root_control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# PASS instead of STOP — clicks outside the dialog go through to
-	# whatever is below, since this is a non-modal floating panel.
-	_root_control.mouse_filter = Control.MOUSE_FILTER_PASS
-	add_child(_root_control)
-
-	# ─── Dialog panel: anchored top-left, positioned in code so we
-	# can place it in the viewport's right-side empty area away from
-	# the DawnUI input column. _set_default_position runs deferred
-	# from _ready once the viewport size is known.
+	# ─── Dialog panel: child of the CanvasLayer directly — no full-
+	# rect parent Control. With nothing covering the rest of the
+	# viewport, mouse events outside the dialog's own bounds miss
+	# every Control on this CanvasLayer and propagate down to the
+	# main scene (so the DawnUI input field receives focus on click,
+	# even with the popup open).
+	#
+	# Anchored top-left, positioned in code via _set_default_position
+	# so it lands in the viewport's right-side empty area.
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	_dialog_panel.custom_minimum_size = _DEFAULT_DIALOG_SIZE
@@ -169,7 +163,7 @@ func _build_ui() -> void:
 	style.content_margin_top = 0
 	style.content_margin_bottom = 0
 	_dialog_panel.add_theme_stylebox_override("panel", style)
-	_root_control.add_child(_dialog_panel)
+	add_child(_dialog_panel)
 
 	_root_vbox = VBoxContainer.new()
 	_root_vbox.add_theme_constant_override("separation", 0)
