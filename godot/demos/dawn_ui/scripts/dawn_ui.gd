@@ -15,10 +15,12 @@ const ThinkingBlockClass = preload("res://demos/dawn_ui/scripts/thinking_block.g
 const ToolCallEntryClass = preload("res://demos/dawn_ui/scripts/tool_call_entry.gd")
 const PlanOrchestratorBlockClass = preload("res://demos/dawn_ui/scripts/plan_orchestrator_block.gd")
 const MemoryInspectorClass = preload("res://demos/dawn_ui/scripts/memory_inspector.gd")
+const ConversationHistorySidebarClass = preload("res://demos/dawn_ui/scripts/conversation_history_sidebar.gd")
 
 @onready var status_dot: Label = $VBox/Header/StatusDot
 @onready var status_label: Label = $VBox/Header/StatusLabel
 @onready var memory_button: Button = $VBox/Header/MemoryButton
+@onready var history_button: Button = $VBox/Header/HistoryButton
 @onready var connection_label: Label = $VBox/Header/ConnectionLabel
 @onready var transcript_toolbar: HBoxContainer = $VBox/TranscriptToolbar
 @onready var transcript_scroll: ScrollContainer = $VBox/TranscriptScroll
@@ -46,6 +48,8 @@ var _plan_blocks: Dictionary = {}
 # Phase 4 — memory inspector window (lazy; built once in _ready, then
 # toggled by the header's Memory button).
 var _memory_inspector = null
+# Phase 4 — conversation history sidebar (file-backed JSON in user://).
+var _history_sidebar = null
 
 
 func _ready() -> void:
@@ -65,6 +69,12 @@ func _ready() -> void:
 	# Build the memory inspector once and reuse it across opens.
 	_memory_inspector = MemoryInspectorClass.new()
 	add_child(_memory_inspector)
+
+	if history_button:
+		history_button.pressed.connect(_on_history_button_pressed)
+	_history_sidebar = ConversationHistorySidebarClass.new()
+	add_child(_history_sidebar)
+	_history_sidebar.conversation_switched.connect(_on_conversation_switched)
 
 	var oasis_mqtt := get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
@@ -122,8 +132,10 @@ func _on_text_submitted(text: String) -> void:
 	if trimmed.is_empty():
 		return
 
-	# Show the user message immediately.
+	# Show the user message immediately + persist to active conversation.
 	_append_bubble(MessageBubble.Role.USER, "You", trimmed)
+	if _history_sidebar:
+		_history_sidebar.append_user_message(trimmed)
 
 	# Publish v1.4 OCP command: dawn/cmd, action=process_intent.
 	if _mqtt:
@@ -243,6 +255,8 @@ func _handle_dawn_response(payload: String) -> void:
 		return
 	var sender: String = msg.get("speaker", "D.A.W.N.")
 	_append_bubble(MessageBubble.Role.ASSISTANT, sender, text)
+	if _history_sidebar:
+		_history_sidebar.append_assistant_message(text)
 
 
 ## Phase 2+ entry point. Routes dawn/events payloads to the right stub. When
@@ -375,3 +389,31 @@ static func _load_font(path: String) -> Font:
 func _on_memory_button_pressed() -> void:
 	if _memory_inspector and _memory_inspector.has_method("toggle"):
 		_memory_inspector.toggle()
+
+
+# ─── Conversation history toggle + replay ─────────────────────────────────
+
+func _on_history_button_pressed() -> void:
+	if _history_sidebar and _history_sidebar.has_method("toggle"):
+		_history_sidebar.toggle()
+
+
+## Called when the user switches to a different past conversation in
+## the sidebar. Wipe the visible transcript and replay the messages
+## from the selected conversation as USER / ASSISTANT bubbles.
+func _on_conversation_switched(messages: Array) -> void:
+	if transcript_box == null:
+		return
+	for child in transcript_box.get_children():
+		child.queue_free()
+	for entry in messages:
+		var role_str: String = str(entry.get("role", ""))
+		var text: String = str(entry.get("text", ""))
+		if text.is_empty():
+			continue
+		var role: int = MessageBubble.Role.USER
+		var sender := "You"
+		if role_str == "assistant":
+			role = MessageBubble.Role.ASSISTANT
+			sender = "D.A.W.N."
+		_append_bubble(role, sender, text)

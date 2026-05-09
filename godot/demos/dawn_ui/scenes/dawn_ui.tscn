@@ -35,6 +35,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "D.A.W.N."
 
+[node name="HistoryButton" type="Button" parent="VBox/Header"]
+layout_mode = 2
+text = "History"
+
 [node name="MemoryButton" type="Button" parent="VBox/Header"]
 layout_mode = 2
 text = "Memory"
