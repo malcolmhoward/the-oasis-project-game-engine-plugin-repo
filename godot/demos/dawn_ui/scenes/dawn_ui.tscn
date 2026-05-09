@@ -37,15 +37,18 @@ text = "D.A.W.N."
 
 [node name="HistoryButton" type="Button" parent="VBox/Header"]
 layout_mode = 2
-text = "History"
+text = "▤"
+tooltip_text = "Conversation history"
 
 [node name="MemoryButton" type="Button" parent="VBox/Header"]
 layout_mode = 2
-text = "Memory"
+text = "◫"
+tooltip_text = "Memory inspector"
 
 [node name="SettingsButton" type="Button" parent="VBox/Header"]
 layout_mode = 2
-text = "Settings"
+text = "⚙"
+tooltip_text = "Settings"
 
 [node name="ConnectionLabel" type="Label" parent="VBox/Header"]
 layout_mode = 2
