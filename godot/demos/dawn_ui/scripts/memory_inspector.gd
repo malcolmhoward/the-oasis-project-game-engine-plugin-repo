@@ -101,6 +101,21 @@ func _ready() -> void:
 	# from the moment it's first opened.
 	for category in CATEGORIES:
 		_apply_items(category, MOCK_SEEDS.get(category, []))
+	# Position the dialog in the right-side empty area away from the
+	# DawnUI input column. Deferred so the viewport size is available.
+	_set_default_position.call_deferred()
+
+
+## Place the dialog near the top-right of the viewport so it doesn't
+## cover the DawnUI input column on the left. Only runs when the user
+## hasn't dragged the dialog manually.
+func _set_default_position() -> void:
+	if _dialog_panel == null:
+		return
+	var viewport_size: Vector2 = get_tree().root.get_visible_rect().size
+	var x: float = max(20.0, viewport_size.x - _DEFAULT_DIALOG_SIZE.x - 30.0)
+	var y: float = 80.0
+	_dialog_panel.position = Vector2(x, y)
 
 
 func _load_project_fonts() -> void:
@@ -129,9 +144,12 @@ func _build_ui() -> void:
 	_root_control.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(_root_control)
 
-	# ─── Dialog panel: starts centred, drag converts to manual pos ───
+	# ─── Dialog panel: anchored top-left, positioned in code so we
+	# can place it in the viewport's right-side empty area away from
+	# the DawnUI input column. _set_default_position runs deferred
+	# from _ready once the viewport size is known.
 	_dialog_panel = PanelContainer.new()
-	_dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_dialog_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	_dialog_panel.custom_minimum_size = _DEFAULT_DIALOG_SIZE
 	_dialog_panel.size = _DEFAULT_DIALOG_SIZE
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP

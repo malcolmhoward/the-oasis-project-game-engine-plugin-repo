@@ -66,6 +66,20 @@ func _ready() -> void:
 	var oasis_mqtt := get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
 		_mqtt = oasis_mqtt.get_mqtt()
+	# Place the dialog in the viewport's right-side empty area so it
+	# doesn't cover the DawnUI input column on the left.
+	_set_default_position.call_deferred()
+
+
+func _set_default_position() -> void:
+	if _dialog_panel == null:
+		return
+	var viewport_size: Vector2 = get_tree().root.get_visible_rect().size
+	var x: float = max(20.0, viewport_size.x - _DEFAULT_DIALOG_SIZE.x - 30.0)
+	# Offset slightly below the memory inspector's default y so if both
+	# happen to be open at once, the user can see they're distinct.
+	var y: float = 120.0
+	_dialog_panel.position = Vector2(x, y)
 
 
 func _load_project_fonts() -> void:
@@ -84,7 +98,10 @@ func _build_ui() -> void:
 	add_child(_root_control)
 
 	_dialog_panel = PanelContainer.new()
-	_dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
+	# Anchored top-left, positioned absolutely via _set_default_position
+	# so the dialog lands in the right-side empty area away from the
+	# DawnUI input column.
+	_dialog_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	_dialog_panel.custom_minimum_size = _DEFAULT_DIALOG_SIZE
 	_dialog_panel.size = _DEFAULT_DIALOG_SIZE
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
