@@ -55,14 +55,14 @@ func _build(sender: String, text: String) -> void:
 			style.border_width_left = ArcReactorDark.BORDER_ACCENT
 			style.border_color = ArcReactorDark.ACCENT_PURPLE
 
-	# Apply margins for message alignment (DAWN pattern: margin on one side)
-	# User messages: indented from left (right-aligned feel)
-	# Assistant messages: indented from right (left-aligned feel)
-	match _role:
-		Role.USER:
-			style.content_margin_left = ArcReactorDark.MSG_USER_MARGIN + ArcReactorDark.SPACE_MD
-		Role.ASSISTANT:
-			style.content_margin_right = ArcReactorDark.MSG_ASSIST_MARGIN + ArcReactorDark.SPACE_MD
+	# Margins are symmetric (SPACE_MD all around, set above) so user and
+	# assistant bubbles share the same left edge — and that edge lines
+	# up with the thinking/tool/plan blocks in the transcript. The
+	# previous asymmetric margins (USER margin-left, ASSISTANT
+	# margin-right) emulated the web UI's right-vs-left alignment, but
+	# in the Godot recreation it left user and assistant text at
+	# different x positions and read as inconsistent next to the
+	# uniform Phase-3 transcript blocks.
 
 	add_theme_stylebox_override("panel", style)
 
