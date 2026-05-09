@@ -31,6 +31,7 @@ const SettingsPanelClass = preload("res://demos/dawn_ui/scripts/settings_panel.g
 @onready var send_button: Button = $VBox/InputRow/SendButton
 @onready var telemetry_rings = $VBox/TelemetryRings  # Phase 2 placeholder Control
 @onready var llm_controls = $VBox/LLMControls         # Phase 4 LLM controls bar
+@onready var connection_toast = $ConnectionToast      # Phase 5 status flash
 
 var _mqtt: MQTTBridge = null
 var _dawn_online: bool = false
@@ -249,6 +250,11 @@ func _handle_status(payload: String) -> void:
 	_dawn_online = status == "online"
 	if _dawn_online != was_online:
 		_update_status()
+		if connection_toast:
+			if _dawn_online:
+				connection_toast.show_online()
+			else:
+				connection_toast.show_offline()
 
 
 func _handle_dawn_response(payload: String) -> void:
