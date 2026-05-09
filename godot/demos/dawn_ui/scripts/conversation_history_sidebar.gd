@@ -67,11 +67,11 @@ func _load_project_fonts() -> void:
 # ─── UI construction ──────────────────────────────────────────────────────
 
 func _build_ui() -> void:
-	_root_control = Control.new()
-	_root_control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_root_control.mouse_filter = Control.MOUSE_FILTER_PASS
-	add_child(_root_control)
-
+	# Dialog sits directly under the CanvasLayer — no full-rect parent
+	# Control intercepting clicks. Mouse events outside the dialog's
+	# bounds miss this CanvasLayer entirely and propagate down to the
+	# main scene's controls (so the DawnUI input field can receive
+	# focus while this sidebar is open).
 	_dialog_panel = PanelContainer.new()
 	# Anchor to top-left so the sidebar sits where a real sidebar would;
 	# user can drag it anywhere from there.
@@ -90,7 +90,7 @@ func _build_ui() -> void:
 	style.border_width_bottom = 1
 	style.set_corner_radius_all(ArcReactor.RADIUS_MD)
 	_dialog_panel.add_theme_stylebox_override("panel", style)
-	_root_control.add_child(_dialog_panel)
+	add_child(_dialog_panel)
 
 	var root_vbox := VBoxContainer.new()
 	root_vbox.add_theme_constant_override("separation", 0)
