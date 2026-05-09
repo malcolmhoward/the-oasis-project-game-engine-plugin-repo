@@ -215,6 +215,17 @@ func _on_close() -> void:
 	closed.emit()
 
 
+## Escape key dismisses an open floating panel — standard tool-window
+## UX. Only fires when this panel is visible so multiple panels open
+## at once don't all close on a single press.
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		_on_close()
+		get_viewport().set_input_as_handled()
+
+
 func _on_drag_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
