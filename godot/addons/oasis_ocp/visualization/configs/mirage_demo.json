@@ -1,0 +1,73 @@
+{
+  "title": "M.I.R.A.G.E. Demo Topology",
+  "description": "Mock traffic → Mosquitto broker → Godot app. Mirrors the original architecture_live layout.",
+  "palette": {
+    "MOCK": "#f0b429",
+    "ACCENT": "#2dd4bf",
+    "GODOT": "#3b82f6"
+  },
+  "nodes": [
+    {
+      "id": "mock",
+      "label": "Mock Traffic",
+      "subtitle": "(Python)",
+      "position": [0.06, 0.25],
+      "size": [0.20, 0.22],
+      "role": "mock",
+      "color": "MOCK",
+      "online_indicator": "always"
+    },
+    {
+      "id": "broker",
+      "label": "Mosquitto MQTT",
+      "subtitle": "(Docker)",
+      "position": [0.40, 0.25],
+      "size": [0.20, 0.22],
+      "role": "broker",
+      "color": "ACCENT",
+      "online_indicator": "mqtt_connected"
+    },
+    {
+      "id": "godot",
+      "label": "Godot App",
+      "subtitle": "(This window)",
+      "position": [0.74, 0.25],
+      "size": [0.20, 0.22],
+      "role": "consumer",
+      "color": "GODOT",
+      "online_indicator": "mqtt_connected"
+    }
+  ],
+  "edges": [
+    {
+      "from": "mock",
+      "to": "broker",
+      "label": "MQTT",
+      "topics": ["aura", "stat", "mirage/events", "dawn/events", "dawn", "*/status", "echo/discovery/simulates"]
+    },
+    {
+      "from": "broker",
+      "to": "godot",
+      "label": "WebSocket",
+      "topics": ["aura", "stat", "mirage/events", "dawn", "dawn/events", "dawn/status", "*/status", "*/events"]
+    },
+    {
+      "from": "godot",
+      "to": "broker",
+      "label": "Publish",
+      "topics": ["dawn/cmd", "e3-avatar/cmd", "*/cmd"]
+    }
+  ],
+  "topic_colors": [
+    {"pattern": "aura", "color": "COMP_AURA"},
+    {"pattern": "stat", "color": "COMP_STAT"},
+    {"pattern": "dawn", "color": "COMP_DAWN"},
+    {"pattern": "dawn/events", "color": "COMP_DAWN"},
+    {"pattern": "dawn/status", "color": "COMP_DAWN"},
+    {"pattern": "mirage/events", "color": "COMP_MIRAGE"},
+    {"pattern": "*/cmd", "color": "CMD"},
+    {"pattern": "*/command", "color": "CMD"},
+    {"pattern": "*/status", "color": "ACCENT"},
+    {"pattern": "*/events", "color": "ACCENT"}
+  ]
+}

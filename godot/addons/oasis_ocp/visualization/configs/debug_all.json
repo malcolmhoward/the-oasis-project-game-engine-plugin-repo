@@ -1,0 +1,51 @@
+{
+  "title": "Debug — All Traffic",
+  "description": "Development view. A single broker node with every observed topic routed through one wildcard edge. Useful for confirming a particular message is reaching the broker at all.",
+  "palette": {
+    "ACCENT": "#2dd4bf",
+    "MOCK":   "#f0b429"
+  },
+  "nodes": [
+    {
+      "id": "publisher",
+      "label": "Publishers",
+      "subtitle": "(any)",
+      "position": [0.10, 0.40],
+      "size": [0.18, 0.20],
+      "role": "mock",
+      "color": "MOCK",
+      "online_indicator": "always"
+    },
+    {
+      "id": "broker",
+      "label": "Mosquitto MQTT",
+      "subtitle": "(Docker)",
+      "position": [0.41, 0.40],
+      "size": [0.18, 0.20],
+      "role": "broker",
+      "color": "ACCENT",
+      "online_indicator": "mqtt_connected"
+    },
+    {
+      "id": "subscriber",
+      "label": "Subscribers",
+      "subtitle": "(any)",
+      "position": [0.72, 0.40],
+      "size": [0.18, 0.20],
+      "role": "consumer",
+      "color": "ACCENT",
+      "online_indicator": "mqtt_connected"
+    }
+  ],
+  "edges": [
+    {"from": "publisher", "to": "broker",     "label": "any topic", "topics": ["#"]},
+    {"from": "broker",    "to": "subscriber", "label": "any topic", "topics": ["#"]}
+  ],
+  "topic_colors": [
+    {"pattern": "*/cmd",     "color": "CMD"},
+    {"pattern": "*/command", "color": "CMD"},
+    {"pattern": "*/status",  "color": "ACCENT"},
+    {"pattern": "*/events",  "color": "ACCENT"},
+    {"pattern": "#",         "color": "DIM"}
+  ]
+}
