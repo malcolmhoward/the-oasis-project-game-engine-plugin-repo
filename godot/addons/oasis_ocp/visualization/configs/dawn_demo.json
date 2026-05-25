@@ -1,0 +1,73 @@
+{
+  "title": "D.A.W.N. Demo Topology",
+  "description": "Chat-focused view — user input flows from the Godot UI through the broker to the DAWN backend, with reasoning events flowing back.",
+  "palette": {
+    "GODOT":   "#3b82f6",
+    "ACCENT":  "#2dd4bf",
+    "DAWN":    "#2dd4bf"
+  },
+  "nodes": [
+    {
+      "id": "godot",
+      "label": "D.A.W.N. UI",
+      "subtitle": "(Godot)",
+      "position": [0.06, 0.32],
+      "size": [0.20, 0.22],
+      "role": "consumer",
+      "color": "GODOT",
+      "online_indicator": "mqtt_connected"
+    },
+    {
+      "id": "broker",
+      "label": "Mosquitto MQTT",
+      "subtitle": "(Docker)",
+      "position": [0.40, 0.32],
+      "size": [0.20, 0.22],
+      "role": "broker",
+      "color": "ACCENT",
+      "online_indicator": "mqtt_connected"
+    },
+    {
+      "id": "dawn",
+      "label": "D.A.W.N. Backend",
+      "subtitle": "(mock / live)",
+      "position": [0.74, 0.32],
+      "size": [0.20, 0.22],
+      "role": "real_source",
+      "color": "DAWN",
+      "online_indicator": "topic_seen:dawn/status"
+    }
+  ],
+  "edges": [
+    {
+      "from": "godot",
+      "to": "broker",
+      "label": "Send",
+      "topics": ["dawn/cmd"]
+    },
+    {
+      "from": "broker",
+      "to": "dawn",
+      "label": "Cmd",
+      "topics": ["dawn/cmd"]
+    },
+    {
+      "from": "dawn",
+      "to": "broker",
+      "label": "Reply",
+      "topics": ["dawn", "dawn/events", "dawn/status"]
+    },
+    {
+      "from": "broker",
+      "to": "godot",
+      "label": "Stream",
+      "topics": ["dawn", "dawn/events", "dawn/status"]
+    }
+  ],
+  "topic_colors": [
+    {"pattern": "dawn/cmd", "color": "CMD"},
+    {"pattern": "dawn/events", "color": "COMP_DAWN"},
+    {"pattern": "dawn/status", "color": "COMP_DAWN"},
+    {"pattern": "dawn", "color": "COMP_DAWN"}
+  ]
+}
