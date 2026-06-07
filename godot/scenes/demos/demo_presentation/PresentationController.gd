@@ -33,9 +33,14 @@ var _saved_slide: Control = null  # Preserved slide instance for Ctrl+D toggle
 
 
 func _ready():
-	# Command-line: --presentation=followup or --presentation=default
-	# Check both engine args and user args (after --)
+	# Command-line:
+	#   --presentation=<name>  choose which manifest under scratch/presentations
+	#   --slide=<N>            start at slide N (1-indexed); skips advance
+	#                          through slides 1..N-1 for faster iteration on a
+	#                          specific slide during dev/tweak sessions.
+	# Both engine args and user args (after --) are checked.
 	var all_args = OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	var start_slide_index: int = 0
 	for arg in all_args:
 		if arg.begins_with("--presentation="):
 			var pname = arg.get_slice("=", 1)
@@ -45,6 +50,10 @@ func _ready():
 				print("[Presentation] Using manifest: %s" % pname)
 			else:
 				push_warning("[Presentation] Manifest not found: %s" % candidate)
+		elif arg.begins_with("--slide="):
+			var n: int = arg.get_slice("=", 1).to_int()
+			if n > 0:
+				start_slide_index = n - 1  # CLI is 1-indexed; internal is 0-indexed
 
 	if manifest_path.is_empty():
 		# Try default locations
@@ -60,7 +69,13 @@ func _ready():
 		_load_manifest(manifest_path)
 
 	if _slides.size() > 0:
-		_show_slide(0, false)
+		var clamped: int = clamp(start_slide_index, 0, _slides.size() - 1)
+		if clamped != start_slide_index:
+			push_warning("[Presentation] --slide=%d out of range (deck has %d slides); starting at slide %d" %
+				[start_slide_index + 1, _slides.size(), clamped + 1])
+		elif clamped > 0:
+			print("[Presentation] Starting at slide %d (--slide flag)" % (clamped + 1))
+		_show_slide(clamped, false)
 
 	# Hide debug panel by default
 	if debug_panel:
