@@ -149,6 +149,48 @@ overlay.mute_topics([])                  # un-mute everything
 
 Useful for demo "hide mock traffic" toggles.
 
+## Self-publish round-trip
+
+The overlay subscribes to every topic declared by its config's edges at
+load time, so the visualization can see traffic the autoload may not
+already track. This includes the Godot client's **own publishes** — when
+you publish to `e3-avatar/cmd` and the active config declares an edge
+with `"topics": ["*/cmd"]` or `"e3-avatar/cmd"`, the broker routes the
+message back to you and the visualizer renders it (counter increments,
+edge pulses, particle animates).
+
+This is the desired behavior for visualization: a viewer expects "I sent
+a command → I see it travel the bus." But it has a consequence for
+**any other handler** that subscribes to a topic it might publish to —
+without a self-filter, two subscribed clients can ping-pong into a loop.
+
+### The convention
+
+Any handler that subscribes to a topic it might publish to MUST filter
+its own publishes out by comparing the OCP `device` field:
+
+```gdscript
+const OWN_DEVICE := "my-component"
+
+func _on_message(topic: String, payload: String) -> void:
+    var msg = JSON.parse_string(payload)
+    if msg is Dictionary and msg.get("device") == OWN_DEVICE:
+        return  # Skip our own publishes
+    # ... handle ...
+```
+
+OCP v1.4 messages always carry `"device": "<peer-id>"`. The mock
+script (`tools/mock_ocp_traffic.py`) follows this pattern when listening
+to its own `dawn` topic.
+
+The topology overlay itself does **not** need this filter — its
+`_on_message` is purely passive (counters, signals, visual effects, no
+publishes). The convention applies to any future scene or addon that
+subscribes-and-publishes on the same topic pattern.
+
+See ADR-0003 for the full rationale on subscription ownership and
+loop prevention.
+
 ## Hotkey toggle pattern
 
 If you want the overlay to fade in/out on a hotkey (e.g. during a slide
