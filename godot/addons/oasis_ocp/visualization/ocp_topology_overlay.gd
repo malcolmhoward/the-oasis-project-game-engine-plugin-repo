@@ -175,6 +175,13 @@ func _build_edges() -> void:
 		edge.configure(spec, _palette, from, to)
 		edge.set_font(_font)
 		_edges.append(edge)
+		# Subscribe to the topics this edge declares so the visualization
+		# sees traffic the autoload may not already track (e.g. */cmd).
+		# See ADR-0003 for the subscription-ownership rationale.
+		# Subscribe-twice is safe — mqtt_bridge.gd dedupes via _subscriptions.
+		if _mqtt:
+			for topic_pattern in edge.topic_patterns:
+				_mqtt.subscribe(topic_pattern, 0)
 
 
 func _relayout_children() -> void:
