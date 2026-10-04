@@ -1,0 +1,96 @@
+{
+  "title": "Full O.A.S.I.S. Ecosystem Topology",
+  "description": "All major components publishing through a single broker. Suitable for public-event demos showing the full message bus.",
+  "palette": {
+    "ACCENT": "#2dd4bf",
+    "MIRAGE": "#00F5FC",
+    "AURA":   "#44dd88",
+    "STAT":   "#3b82f6",
+    "DAWN":   "#2dd4bf",
+    "SCOPE":  "#a78bfa",
+    "MOCK":   "#f0b429"
+  },
+  "nodes": [
+    {
+      "id": "aura",
+      "label": "A.U.R.A.",
+      "subtitle": "motion / gps / env",
+      "position": [0.04, 0.08],
+      "size": [0.18, 0.18],
+      "role": "real_source",
+      "color": "AURA",
+      "online_indicator": "topic_seen:aura/status"
+    },
+    {
+      "id": "stat",
+      "label": "S.T.A.T.",
+      "subtitle": "system / battery",
+      "position": [0.04, 0.36],
+      "size": [0.18, 0.18],
+      "role": "real_source",
+      "color": "STAT",
+      "online_indicator": "topic_seen:stat/status"
+    },
+    {
+      "id": "mirage",
+      "label": "M.I.R.A.G.E.",
+      "subtitle": "HUD / events",
+      "position": [0.04, 0.64],
+      "size": [0.18, 0.18],
+      "role": "real_source",
+      "color": "MIRAGE",
+      "online_indicator": "topic_seen:mirage/events"
+    },
+    {
+      "id": "broker",
+      "label": "Mosquitto MQTT",
+      "subtitle": "(Docker)",
+      "position": [0.41, 0.36],
+      "size": [0.18, 0.20],
+      "role": "broker",
+      "color": "ACCENT",
+      "online_indicator": "mqtt_connected"
+    },
+    {
+      "id": "dawn",
+      "label": "D.A.W.N.",
+      "subtitle": "responder",
+      "position": [0.78, 0.20],
+      "size": [0.18, 0.18],
+      "role": "real_source",
+      "color": "DAWN",
+      "online_indicator": "topic_seen:dawn/status"
+    },
+    {
+      "id": "scope",
+      "label": "S.C.O.P.E.",
+      "subtitle": "coordinator",
+      "position": [0.78, 0.50],
+      "size": [0.18, 0.18],
+      "role": "consumer",
+      "color": "SCOPE",
+      "online_indicator": "topic_seen:scope/status"
+    }
+  ],
+  "edges": [
+    {"from": "aura",   "to": "broker", "label": "publish", "topics": ["aura", "aura/status"]},
+    {"from": "stat",   "to": "broker", "label": "publish", "topics": ["stat", "stat/status"]},
+    {"from": "mirage", "to": "broker", "label": "publish", "topics": ["mirage/events", "mirage/status"]},
+    {"from": "broker", "to": "dawn",   "label": "cmd",     "topics": ["dawn/cmd"]},
+    {"from": "dawn",   "to": "broker", "label": "reply",   "topics": ["dawn", "dawn/events", "dawn/status"]},
+    {"from": "broker", "to": "scope",  "label": "subscribe", "topics": ["aura/status", "stat/status", "mirage/status", "dawn/status", "scope/status"]}
+  ],
+  "topic_colors": [
+    {"pattern": "aura", "color": "AURA"},
+    {"pattern": "aura/status", "color": "AURA"},
+    {"pattern": "stat", "color": "STAT"},
+    {"pattern": "stat/status", "color": "STAT"},
+    {"pattern": "mirage/events", "color": "MIRAGE"},
+    {"pattern": "mirage/status", "color": "MIRAGE"},
+    {"pattern": "dawn/cmd", "color": "CMD"},
+    {"pattern": "dawn", "color": "DAWN"},
+    {"pattern": "dawn/events", "color": "DAWN"},
+    {"pattern": "dawn/status", "color": "DAWN"},
+    {"pattern": "scope/status", "color": "SCOPE"}
+  ]
+}
