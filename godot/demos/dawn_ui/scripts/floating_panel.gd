@@ -28,6 +28,7 @@
 ## All scaffolding fonts pull from ArcReactor's project fonts loaded
 ## in _load_project_fonts; subclasses can use the protected
 ## _font_sans / _font_sans_bold for their own controls.
+@tool
 class_name FloatingPanel
 extends CanvasLayer
 

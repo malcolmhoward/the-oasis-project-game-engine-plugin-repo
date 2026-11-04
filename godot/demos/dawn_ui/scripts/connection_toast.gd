@@ -11,6 +11,7 @@
 ##
 ## Both share a single Tween — calling either while another is
 ## in-flight kills the old one and starts the new one cleanly.
+@tool
 extends PanelContainer
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
@@ -24,6 +25,9 @@ var _font_sans: Font = null
 
 
 func _ready() -> void:
+	# @tool for the editor dock; stay inert while dawn_ui.tscn is open for editing.
+	if Engine.is_editor_hint() and is_part_of_edited_scene():
+		return
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
 	modulate.a = 0.0

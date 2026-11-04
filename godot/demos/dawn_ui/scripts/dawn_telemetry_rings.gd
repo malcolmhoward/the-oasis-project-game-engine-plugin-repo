@@ -9,6 +9,7 @@
 ##
 ## "No data" state: rings render dimmed with "—" placeholders. set_metrics()
 ## clears that state on first call.
+@tool
 extends Control
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
