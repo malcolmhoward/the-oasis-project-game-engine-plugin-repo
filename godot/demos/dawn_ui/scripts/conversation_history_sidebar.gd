@@ -10,9 +10,12 @@
 ## collapsible drag bar + close) from FloatingPanel; only the body
 ## (session list + new-conversation button) and the persistence
 ## logic live here.
+@tool
 extends "res://demos/dawn_ui/scripts/floating_panel.gd"
 
-const SAVE_PATH: String = "user://dawn_conversations.json"
+## Where conversations persist. Set before the node enters the tree; the local-model
+## chat (addons/dawn_chat) uses its own file so it never mixes with DAWN history.
+var save_path: String = "user://dawn_conversations.json"
 
 signal conversation_switched(messages: Array)
 
@@ -78,9 +81,9 @@ func append_assistant_message(text: String) -> void:
 # ─── Persistence ──────────────────────────────────────────────────────────
 
 func _load_state() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
+	if not FileAccess.file_exists(save_path):
 		return
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var f := FileAccess.open(save_path, FileAccess.READ)
 	if f == null:
 		return
 	var data: Variant = JSON.parse_string(f.get_as_text())
@@ -92,7 +95,7 @@ func _load_state() -> void:
 
 
 func _save_state() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var f := FileAccess.open(save_path, FileAccess.WRITE)
 	if f == null:
 		return
 	f.store_string(JSON.stringify({

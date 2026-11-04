@@ -7,6 +7,13 @@
 ## Phase 2+ stubs are present (telemetry rings, thinking blocks, plan
 ## orchestrator, tool execution entries) and consume dawn/events payloads
 ## when upstream begins publishing them. Until then they no-op cleanly.
+##
+## Direct-backend mode (addons/dawn_chat): when `backend` is set before _ready,
+## messages go to that backend (e.g. llama_server_backend.gd, streaming from a
+## local llama-server) instead of MQTT. `editor_mode` marks the instance the
+## editor plugin docks; @tool lets it run there, and the guard in _ready keeps
+## the script inert when dawn_ui.tscn is merely open for editing.
+@tool
 extends Control
 
 const ArcReactor = preload("res://resources/design_tokens.gd")
@@ -33,8 +40,24 @@ const SettingsPanelClass = preload("res://demos/dawn_ui/scripts/settings_panel.g
 @onready var llm_controls = $VBox/LLMControls         # Phase 4 LLM controls bar
 @onready var connection_toast = $ConnectionToast      # Phase 5 status flash
 
-var _mqtt: MQTTBridge = null
+## Conversation history for the direct backend (editor dock), kept apart from DAWN's.
+const LOCAL_HISTORY_PATH := "user://dawn_chat_local_conversations.json"
+
+## Set by the editor plugin before the node enters the tree.
+var editor_mode: bool = false
+## Optional direct backend (see addons/dawn_chat/llama_server_backend.gd).
+## When null, the UI talks to DAWN over MQTT as before.
+var backend: Node = null
+
+var _mqtt = null  # MQTTBridge; untyped so this @tool script loads in the editor without the autoload
 var _dawn_online: bool = false
+# Direct-backend streaming state: the assistant bubble being filled, its text,
+# and the thinking block for reasoning tokens (if the server sends any).
+var _stream_bubble = null
+var _stream_text: String = ""
+var _reasoning_block = null
+# Transcript auto-scroll: true while the view is at the bottom (see _install_scroll_follow).
+var _follow_bottom: bool = true
 var _copy_button: Button = null
 var _clear_button: Button = null
 # Phase 2+ telemetry state (empty until dawn/events lands or schema is defined)
@@ -58,9 +81,15 @@ var _settings_panel = null
 
 
 func _ready() -> void:
+	# In the editor, run only as the plugin's dock, never as a scene being edited.
+	if Engine.is_editor_hint() and not editor_mode:
+		return
 	_style_header()
 	_style_input()
 	_install_transcript_toolbar()
+	_install_scroll_follow()
+	if editor_mode:
+		_fit_to_dock()
 
 	if send_button:
 		send_button.pressed.connect(_on_send_pressed)
@@ -69,27 +98,39 @@ func _ready() -> void:
 		input_field.keep_editing_on_text_submit = true
 		input_field.grab_focus.call_deferred()
 
-	if memory_button:
-		memory_button.pressed.connect(_on_memory_button_pressed)
-	# Build the memory inspector once and reuse it across opens.
-	_memory_inspector = MemoryInspectorClass.new()
-	add_child(_memory_inspector)
+	# Memory inspector, settings and the LLM controls bar drive DAWN over
+	# MQTT; with a direct backend they have nothing to talk to, so hide them.
+	if backend:
+		for n in [memory_button, settings_button, llm_controls]:
+			if n:
+				n.visible = false
+	else:
+		if memory_button:
+			memory_button.pressed.connect(_on_memory_button_pressed)
+		# Build the memory inspector once and reuse it across opens.
+		_memory_inspector = MemoryInspectorClass.new()
+		add_child(_memory_inspector)
+
+		if settings_button:
+			settings_button.pressed.connect(_on_settings_button_pressed)
+		_settings_panel = SettingsPanelClass.new()
+		add_child(_settings_panel)
 
 	if history_button:
 		history_button.pressed.connect(_on_history_button_pressed)
 	_history_sidebar = ConversationHistorySidebarClass.new()
+	if backend:
+		_history_sidebar.save_path = LOCAL_HISTORY_PATH
 	add_child(_history_sidebar)
 	_history_sidebar.conversation_switched.connect(_on_conversation_switched)
 
-	if settings_button:
-		settings_button.pressed.connect(_on_settings_button_pressed)
-	_settings_panel = SettingsPanelClass.new()
-	add_child(_settings_panel)
-
-	var oasis_mqtt := get_node_or_null("/root/OasisMQTT")
-	if oasis_mqtt:
-		_mqtt = oasis_mqtt.get_mqtt()
-		oasis_mqtt.global_message.connect(_on_message)
+	if backend:
+		_connect_backend()
+	else:
+		var oasis_mqtt := get_node_or_null("/root/OasisMQTT")
+		if oasis_mqtt:
+			_mqtt = oasis_mqtt.get_mqtt()
+			oasis_mqtt.global_message.connect(_on_message)
 
 	_update_status()
 
@@ -133,6 +174,10 @@ func _style_input() -> void:
 
 
 func _on_send_pressed() -> void:
+	# With a direct backend the button doubles as Stop while a reply streams.
+	if backend and backend.is_busy():
+		backend.cancel()
+		return
 	if input_field:
 		_on_text_submitted(input_field.text)
 
@@ -141,14 +186,18 @@ func _on_text_submitted(text: String) -> void:
 	var trimmed := text.strip_edges()
 	if trimmed.is_empty():
 		return
+	if backend and backend.is_busy():
+		return
 
 	# Show the user message immediately + persist to active conversation.
-	_append_bubble(MessageBubble.Role.USER, "You", trimmed)
+	_append_bubble(MessageBubble.Role.USER, "You", _escape_bbcode(trimmed) if backend else trimmed)
 	if _history_sidebar:
 		_history_sidebar.append_user_message(trimmed)
 
+	if backend:
+		backend.send(trimmed)
 	# Publish v1.4 OCP command: dawn/cmd, action=process_intent.
-	if _mqtt:
+	elif _mqtt:
 		var msg := {
 			"device": "godot-dawn-ui",
 			"msg_type": "command",
@@ -177,9 +226,26 @@ func _append_bubble(role: int, sender: String, text: String) -> void:
 func _scroll_to_bottom() -> void:
 	if transcript_scroll == null:
 		return
+	_follow_bottom = true
 	var bar := transcript_scroll.get_v_scroll_bar()
 	if bar:
 		bar.value = bar.max_value
+
+
+## Stick to the bottom while the user is there. The scroll range grows only
+## after layout, so a value set right after adding text lands a line short
+## (seen in frame captures of a streaming reply); `changed` fires once the new
+## range is known. Scrolling up to read turns following off until the user
+## returns to the bottom.
+func _install_scroll_follow() -> void:
+	if transcript_scroll == null:
+		return
+	var bar := transcript_scroll.get_v_scroll_bar()
+	bar.changed.connect(func():
+		if _follow_bottom:
+			bar.value = bar.max_value)
+	bar.value_changed.connect(func(v: float):
+		_follow_bottom = v >= bar.max_value - bar.page - 4.0)
 
 
 func _install_transcript_toolbar() -> void:
@@ -228,6 +294,133 @@ func _on_clear_transcript() -> void:
 		return
 	for child in transcript_box.get_children():
 		child.queue_free()
+	if backend:
+		backend.reset()
+		_stream_bubble = null
+		_reasoning_block = null
+
+
+# ─── Direct backend (addons/dawn_chat) ────────────────────────────────────
+
+## An editor dock is ~280 px wide; the in-game layout needs ~413 px for the
+## header alone (the heading-size title) and reserves 72 px at the bottom.
+## Let the title shrink with an ellipsis, use the full height, and clip to the
+## dock so nothing draws over neighbouring editor panels.
+func _fit_to_dock() -> void:
+	clip_contents = true
+	var vbox := get_node_or_null("VBox") as Control
+	if vbox:
+		vbox.offset_bottom = -8
+	var header := get_node_or_null("VBox/Header") as HBoxContainer
+	if header:
+		header.add_theme_constant_override("separation", 6)
+	# The connection toast sits top-centre, over the header in a narrow dock. Move it to
+	# the top of the transcript, and last in draw order (as the scene's first child,
+	# everything else drew over it).
+	if connection_toast:
+		connection_toast.offset_top = 116
+		connection_toast.offset_bottom = 144
+		move_child(connection_toast, -1)
+	if status_label:
+		status_label.clip_text = true
+		status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		status_label.custom_minimum_size.x = 40
+		status_label.add_theme_font_size_override("font_size", ArcReactor.FONT_SUBHEAD)
+
+
+func _connect_backend() -> void:
+	backend.online_changed.connect(_on_backend_online_changed)
+	backend.reply_started.connect(_on_backend_reply_started)
+	backend.reply_delta.connect(_on_backend_reply_delta)
+	backend.reasoning_delta.connect(_on_backend_reasoning_delta)
+	backend.reply_finished.connect(_on_backend_reply_finished)
+	backend.reply_failed.connect(_on_backend_reply_failed)
+	if status_label:
+		# The editor dock's tab already says D.A.W.N.; keep its title short.
+		status_label.text = "D.A.W.N." if editor_mode else "D.A.W.N. · local"
+		status_label.tooltip_text = "Local model via llama-server (%s)" % backend.server_url
+		status_label.mouse_filter = Control.MOUSE_FILTER_PASS  # Labels ignore the mouse by default; tooltips need it
+	_dawn_online = backend.is_online()
+
+
+func _on_backend_online_changed(online: bool) -> void:
+	if online == _dawn_online:
+		return
+	_dawn_online = online
+	_update_status()
+	if connection_toast:
+		if online:
+			connection_toast.show_online()
+		else:
+			connection_toast.show_offline()
+
+
+func _on_backend_reply_started() -> void:
+	_stream_bubble = null
+	_stream_text = ""
+	_reasoning_block = null
+	if send_button:
+		send_button.text = "Stop"
+	if connection_label:
+		connection_label.text = "THINKING"
+
+
+func _on_backend_reasoning_delta(text: String) -> void:
+	if _reasoning_block == null or not is_instance_valid(_reasoning_block):
+		_reasoning_block = ThinkingBlockClass.new()
+		transcript_box.add_child(_reasoning_block)
+		_reasoning_block.start("local", "llama-server")
+	_reasoning_block.append_delta(text)  # scroll-follow keeps it in view if the user is at the bottom
+
+
+func _on_backend_reply_delta(text: String) -> void:
+	_end_reasoning()
+	_stream_text += text
+	if _stream_bubble == null or not is_instance_valid(_stream_bubble):
+		_stream_bubble = MessageBubble.create(MessageBubble.Role.ASSISTANT, "D.A.W.N.", "")
+		transcript_box.add_child(_stream_bubble)
+	_stream_bubble.set_text(_escape_bbcode(_stream_text))  # scroll-follow handles scrolling
+
+
+func _on_backend_reply_finished(full_text: String, metrics: Dictionary) -> void:
+	_end_reasoning()
+	if _stream_bubble and is_instance_valid(_stream_bubble):
+		_stream_bubble.set_text(_escape_bbcode(full_text))
+	else:
+		_append_bubble(MessageBubble.Role.ASSISTANT, "D.A.W.N.", _escape_bbcode(full_text))
+	_stream_bubble = null
+	if _history_sidebar:
+		_history_sidebar.append_assistant_message(full_text)
+	if not metrics.is_empty():
+		_on_metrics_event(metrics)
+	_reply_done()
+
+
+func _on_backend_reply_failed(error: String) -> void:
+	_end_reasoning()
+	_stream_bubble = null
+	_append_bubble(MessageBubble.Role.SYSTEM, "Error", _escape_bbcode(error))
+	_reply_done()
+
+
+func _end_reasoning() -> void:
+	if _reasoning_block and is_instance_valid(_reasoning_block):
+		_reasoning_block.finish(0)
+	_reasoning_block = null
+
+
+func _reply_done() -> void:
+	if send_button:
+		send_button.text = "Send"
+	_update_status()
+	if input_field:
+		input_field.grab_focus()
+
+
+## Model output is plain text (often code with [brackets]); stop the bubble's
+## RichTextLabel from treating it as BBCode.
+static func _escape_bbcode(text: String) -> String:
+	return text.replace("[", "[lb]")
 
 
 # ─── MQTT ─────────────────────────────────────────────────────────────────
@@ -429,6 +622,8 @@ func _on_conversation_switched(messages: Array) -> void:
 		return
 	for child in transcript_box.get_children():
 		child.queue_free()
+	if backend:
+		backend.reset(messages)
 	for entry in messages:
 		var role_str: String = str(entry.get("role", ""))
 		var text: String = str(entry.get("text", ""))

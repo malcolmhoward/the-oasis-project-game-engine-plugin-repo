@@ -6,6 +6,7 @@
 ##
 ## Role label uses IBM Plex Mono (uppercase, letter-spaced).
 ## Message text uses Source Sans 3 (sentence case).
+@tool
 class_name MessageBubble
 extends PanelContainer
 
@@ -20,6 +21,12 @@ static func create(role: Role, sender: String, text: String) -> MessageBubble:
 	bubble._role = role
 	bubble._build(sender, text)
 	return bubble
+
+
+## Replace the message text (BBCode). Used to grow a bubble while a reply streams in.
+func set_text(text: String) -> void:
+	if _msg_label:
+		_msg_label.text = text
 
 
 ## Typewriter effect — reveals text character by character.
@@ -90,6 +97,7 @@ func _build(sender: String, text: String) -> void:
 	msg_label.bbcode_enabled = true
 	msg_label.fit_content = true
 	msg_label.scroll_active = false
+	msg_label.selection_enabled = true  # select + copy parts of a reply (e.g. code)
 	msg_label.text = text
 	msg_label.add_theme_font_size_override("normal_font_size", 15)  # 0.9375rem
 	msg_label.add_theme_color_override("default_color", ArcReactorDark.TEXT_PRIMARY)

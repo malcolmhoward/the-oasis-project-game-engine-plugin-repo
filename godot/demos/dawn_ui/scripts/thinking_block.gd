@@ -10,6 +10,7 @@
 ## Visual: dim accent border on the left, "THINKING" header with a
 ## chevron toggle and duration badge, the body itself in a slightly
 ## smaller font with the secondary text colour.
+@tool
 class_name ThinkingBlock
 extends PanelContainer
 
