@@ -55,8 +55,8 @@ GPL-3.0 — see [LICENSE](LICENSE).
 
 ## Security
 
-For security concerns, please open a private issue or contact the maintainers via the [O.A.S.I.S. meta-repository](https://github.com/malcolmhoward/the-oasis-project-meta-repo).
+For security concerns, please report them privately through this repository's [Security tab](https://github.com/malcolmhoward/the-oasis-project-game-engine-plugin-repo/security).
 
 ---
 
-*Part of the [O.A.S.I.S. Project](https://github.com/The-OASIS-Project). Generated with [Project Foundation Template](https://github.com/malcolmhoward/project-foundation-template).*
+*A community-built plugin for the [O.A.S.I.S. Project](https://github.com/The-OASIS-Project) ecosystem. It is not an official O.A.S.I.S. repository. Generated with [Project Foundation Template](https://github.com/malcolmhoward/project-foundation-template).*
