@@ -7,6 +7,37 @@
 ## Usage:
 ##   $Title.add_theme_font_size_override("font_size", PresentationTheme.TITLE)
 ##   $Body.add_theme_font_size_override("font_size", PresentationTheme.BODY)
+##
+## --- Visual Hierarchy: Style + Structure ---
+##
+## Font size alone does not determine visual prominence. A label's
+## perceived weight depends on:
+##   - The font size (these constants)
+##   - The container's structural padding (cell dimensions, separators)
+##   - The character density of the text itself
+##
+## Example: PT.BODY (28pt) text inside a 220x100 padded grid cell reads
+## comfortably because the cell provides empty space around the text.
+## The same PT.BODY text in a flow-layout VBoxContainer with no fixed
+## cell size reads as small and cramped because there's no padding.
+##
+## When designing a multi-element slide, decide BOTH the font scale
+## (these PT.* constants) AND the structural padding (custom_minimum_size,
+## h_separation, v_separation, separators) together. Reusing PT constants
+## alone will not make two slides feel visually consistent; the
+## surrounding structure has to support the styling.
+##
+## Reference pattern — grid/table layout:
+##   - GridContainer with cells at custom_minimum_size ~(220-480) x 100
+##   - h_separation = v_separation = 12
+##   - BODY text in cells; SUBHEADING for column or row headers
+##   - vertical_alignment = 1 (center) and autowrap_mode = 2 inside cells
+##   Suitable for any number of elements; cells provide the breathing room.
+##
+## Reference pattern — section list:
+##   - VBoxContainer per section, sections side-by-side via offset
+##     positioning. Works for sparse 1-3 line sections. For denser
+##     content (4+ lines per section), switch to the grid pattern.
 class_name PresentationTheme
 
 
