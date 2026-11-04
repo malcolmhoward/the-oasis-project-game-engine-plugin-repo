@@ -20,6 +20,8 @@ extends PanelContainer
 
 var _mqtt: MQTTBridge = null
 var _dawn_online: bool = false
+var _copy_button: Button = null
+var _clear_button: Button = null
 
 
 func _ready() -> void:
@@ -35,6 +37,11 @@ func _ready() -> void:
 	if fallback_log:
 		fallback_log.bbcode_enabled = true
 		fallback_log.text = ""
+		# Selection + clipboard via right-click and Ctrl+C/A.
+		fallback_log.selection_enabled = true
+		fallback_log.context_menu_enabled = true
+		fallback_log.shortcut_keys_enabled = true
+		_install_chat_toolbar()
 
 	# Monitor DAWN's presence on OCP
 	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
@@ -43,6 +50,50 @@ func _ready() -> void:
 		_mqtt = oasis_mqtt.get_mqtt()
 
 	_update_status()
+
+
+## Insert a Copy/Clear toolbar directly above the fallback log so the
+## chat history is easy to share and scrub without keyboard shortcuts.
+func _install_chat_toolbar() -> void:
+	if fallback_log == null:
+		return
+	var parent := fallback_log.get_parent()
+	if parent == null:
+		return
+	var toolbar := HBoxContainer.new()
+	toolbar.name = "ChatToolbar"
+	toolbar.alignment = BoxContainer.ALIGNMENT_END
+	_copy_button = Button.new()
+	_copy_button.text = "Copy"
+	_copy_button.tooltip_text = "Copy entire chat log to clipboard"
+	_copy_button.pressed.connect(_on_copy_log)
+	_clear_button = Button.new()
+	_clear_button.text = "Clear"
+	_clear_button.tooltip_text = "Clear the chat log"
+	_clear_button.pressed.connect(_on_clear_log)
+	toolbar.add_child(_copy_button)
+	toolbar.add_child(_clear_button)
+	parent.add_child(toolbar)
+	parent.move_child(toolbar, fallback_log.get_index())  # above the log
+
+
+func _on_copy_log() -> void:
+	if fallback_log == null:
+		return
+	var raw := fallback_log.get_parsed_text()
+	if raw.is_empty():
+		raw = fallback_log.text
+	DisplayServer.clipboard_set(raw)
+	if _copy_button:
+		_copy_button.text = "Copied!"
+		await get_tree().create_timer(1.0).timeout
+		if is_instance_valid(_copy_button):
+			_copy_button.text = "Copy"
+
+
+func _on_clear_log() -> void:
+	if fallback_log:
+		fallback_log.clear()
 
 
 func _open_dawn_ui() -> void:
@@ -67,26 +118,32 @@ func _on_fallback_text_submitted(text: String) -> void:
 			"msg_type": "command",
 			"action": "process_intent",
 			"parameters": {"text": text},
-			"timestamp": int(Time.get_unix_time_from_system()),
+			"timestamp": OCPMessage.now_ms(),
 		}
-		_mqtt.publish("oasis/dawn/input", JSON.stringify(msg))
+		_mqtt.publish(OCPMessage.cmd_topic("dawn"), JSON.stringify(msg))
 	if fallback_input:
 		fallback_input.clear()
 
 
 func _on_message(topic: String, payload: String) -> void:
-	# Track DAWN online status (OCP topic: dawn/status)
-	if topic == "dawn/status" or topic == "oasis/dawn/status":
+	# Track DAWN online status (v1.4 OCP topic: dawn/status)
+	if topic == "dawn/status":
 		var msg = OCPMessage.parse(payload)
 		if msg and msg.get("status") == "online":
 			_dawn_online = true
 			_update_status()
 
-	# Display DAWN responses in fallback log
-	if topic == "dawn" or topic == "oasis/dawn/output":
+	# Display DAWN responses in fallback log (v1.4: dawn topic for output)
+	if topic == "dawn":
 		var msg = OCPMessage.parse(payload)
 		if msg and fallback_log:
-			var text: String = msg.get("text", msg.get("response", JSON.stringify(msg)))
+			# Skip echoes of our own outbound commands
+			if msg.get("device", "") == "godot-ui":
+				return
+			# DAWN responses use "value" (mock format) or "text"/"response"
+			var text: String = msg.get("value", msg.get("text", msg.get("response", "")))
+			if text.is_empty():
+				return
 			fallback_log.append_text("[color=#00BFFF]D.A.W.N.:[/color] %s\n" % text)
 			if fallback_log.get_line_count() > 100:
 				# Auto-scroll

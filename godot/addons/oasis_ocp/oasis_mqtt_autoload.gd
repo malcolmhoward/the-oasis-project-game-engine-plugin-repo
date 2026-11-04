@@ -40,14 +40,16 @@ func _ready() -> void:
 	mqtt.disconnected.connect(_on_disconnected)
 	mqtt.message_received.connect(_on_message)
 
-	# Connect to broker
-	mqtt.connect_to_broker(broker_host, broker_port)
+	# Defer broker connect so OCPPeers in the initial scene can register
+	# their Last Will payloads before CONNECT is sent.
+	mqtt.connect_to_broker.call_deferred(broker_host, broker_port)
 
 
 func _on_connected() -> void:
 	print("[OasisMQTT] Connected to %s:%d" % [broker_host, broker_port])
-	# Subscribe to O.A.S.I.S. MQTT topics
-	mqtt.subscribe("oasis/#")       # OCP peer status (oasis/<peer_id>/status)
+	# v1.4 topic conventions: <component>/<suffix> (no oasis/ prefix)
+	mqtt.subscribe("+/status")      # All peer status messages
+	mqtt.subscribe("+/events")      # All peer event messages
 	mqtt.subscribe("echo/#")        # Simulation discovery (echo/discovery/simulates)
 	mqtt.subscribe("aura")          # A.U.R.A. sensor data (motion, GPS, environmental)
 	mqtt.subscribe("stat")          # S.T.A.T. system metrics and battery

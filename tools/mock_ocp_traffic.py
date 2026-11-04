@@ -113,23 +113,20 @@ def main():
         if rc == 0 or (hasattr(rc, 'value') and rc.value == 0):
             print(f"  [MQTT] Connected to {args.broker}:{args.port}")
             # (Re-)subscribe on every connect — survives broker restarts
+            # v1.4 input: dawn/cmd; v1.3 input: dawn (kept for backward compat)
             c.subscribe("dawn", qos=1)
-            # Publish peer status on (re)connect
+            c.subscribe("dawn/cmd", qos=1)
+            # Publish peer status on (re)connect (v1.4: <component>/status)
             for component, peer_id, caps in peers:
                 c.publish(f"{component}/status", json.dumps({
                     "device": component, "msg_type": "status", "status": "online",
-                    "timestamp": int(time.time()), "version": "0.1.0-mock",
+                    "timestamp": int(time.time() * 1000), "version": "0.1.0-mock",
                     "capabilities": caps,
-                }), qos=1, retain=True)
-                c.publish(f"oasis/{peer_id}/status", json.dumps({
-                    "peer_id": peer_id, "component": component,
-                    "embodiment": "software", "status": "online",
-                    "timestamp": int(time.time()),
                 }), qos=1, retain=True)
                 c.publish("echo/discovery/simulates", json.dumps({
                     "peer_id": peer_id, "component": component,
                     "embodiment": "software", "capabilities": caps,
-                    "timestamp": int(time.time()),
+                    "timestamp": int(time.time() * 1000),
                 }), qos=1, retain=True)
         else:
             print(f"  [MQTT] Connection refused: {rc}")
@@ -138,13 +135,16 @@ def main():
         print(f"  [MQTT] Disconnected (rc={rc}). Auto-reconnect will retry...")
 
     def on_message(c, u, msg):
-        if msg.topic != "dawn":
+        if msg.topic not in ("dawn", "dawn/cmd"):
             return
         try:
             p = json.loads(msg.payload.decode())
         except Exception:
             return
-        text = p.get("value", p.get("text", ""))
+        # v1.4 cmd format: {action: "process_intent", parameters: {text: "..."}}
+        # v1.3 dawn topic: {value: "..."} or {text: "..."}
+        params = p.get("parameters", {}) or {}
+        text = params.get("text") or p.get("value") or p.get("text") or ""
         if not text or p.get("device") == "echo-dawn-mock":
             return
         r = "I'm not sure how to help with that. Try 'help' to see what I can do."
@@ -215,19 +215,18 @@ def main():
         # Publish DAWN response
         c.publish("dawn", json.dumps({
             "device": "echo-dawn-mock", "action": "speak",
-            "value": r, "confused": confused, "timestamp": int(time.time()),
+            "value": r, "confused": confused, "timestamp": int(time.time() * 1000),
         }))
         # Publish OCP command to avatar if applicable
         if ocp_command:
-            # Publish OCP command to the E3 avatar's command topic
-            # device must match the avatar's peer_id for OCPPeer to process it
-            c.publish("oasis/e3-avatar/command", json.dumps({
+            # v1.4: <component>/cmd. The avatar's component_name is "e3-avatar".
+            c.publish("e3-avatar/cmd", json.dumps({
                 "device": "e3-avatar", "msg_type": "command",
                 "action": ocp_command["action"],
                 "parameters": ocp_command.get("parameters", {}),
-                "timestamp": int(time.time()),
+                "timestamp": int(time.time() * 1000),
             }))
-            print(f"  [OCP] -> oasis/godot/command: {ocp_command['action']}")
+            print(f"  [OCP] -> e3-avatar/cmd: {ocp_command['action']}")
         dawn_count[0] += 1
         print(f"  [DAWN] {text} -> {r}")
 
@@ -246,8 +245,22 @@ def main():
     signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
 
+    # Notification scenario tape (seconds offset from start, payload).
+    # Replays once on a 5-minute loop so the toast visibly fires during demos.
+    notification_tape = [
+        (45.0, {"category": "incoming_call", "caller_name": "Pepper Potts",
+                "status": "Mobile - 555-0142"}),
+        (52.0, {"category": "call_active", "caller_name": "Pepper Potts",
+                "status": "Connected - 00:07"}),
+        (62.0, {"category": "call_ended", "caller_name": "Pepper Potts",
+                "status": "Duration 00:17"}),
+        (95.0, {"category": "sms_received", "caller_name": "Rhodey",
+                "status": "ETA 20 minutes."}),
+    ]
+
     t0 = time.time()
     last_heartbeat = 0
+    last_notification_idx = -1
     while True:
         t = time.time() - t0
         client.publish("aura", json.dumps(make_motion(t, phase)))
@@ -256,12 +269,34 @@ def main():
         client.publish("stat", json.dumps(make_system_metrics(t)))
         client.publish("stat", json.dumps(make_battery()))
         msg_count[0] += 5
+
+        # Loop the notification tape every 300s. Publish at most one
+        # entry per tick: the next un-fired entry whose 'when' has been
+        # reached. last_notification_idx tracks the index of the most
+        # recently fired entry; reset on the loop boundary.
+        loop_t = t % 300.0
+        if loop_t < 1.0 and last_notification_idx >= 0:
+            last_notification_idx = -1
+        next_idx = last_notification_idx + 1
+        if next_idx < len(notification_tape):
+            when, payload = notification_tape[next_idx]
+            if loop_t >= when:
+                last_notification_idx = next_idx
+                event = {
+                    "device": "mirage", "msg_type": "event",
+                    "event": "notification",
+                    "timestamp": int(time.time() * 1000),
+                    **payload,
+                }
+                client.publish("mirage/events", json.dumps(event))
+                print(f"  [NOTIFY] {payload['category']}: {payload['caller_name']}")
+
         if int(t) % 30 == 0 and int(t) != last_heartbeat:
             last_heartbeat = int(t)
             for comp, pid, caps in peers:
                 client.publish(f"{comp}/status", json.dumps({
                     "device": comp, "msg_type": "status", "status": "online",
-                    "timestamp": int(time.time()), "version": "0.1.0-mock",
+                    "timestamp": int(time.time() * 1000), "version": "0.1.0-mock",
                     "capabilities": caps,
                 }), qos=1, retain=True)
             elapsed = _format_elapsed(t)

@@ -41,11 +41,38 @@ func _ready() -> void:
 	if _mqtt == null:
 		push_warning("OCPPeer '%s': No MQTTBridge found. Peer will not connect." % peer_id)
 		return
+	# Configure Last Will so the broker publishes "offline" if this client
+	# disconnects ungracefully. Only takes effect on the next CONNECT —
+	# already-open connections keep their original (or no) will.
+	_set_lwt()
 	# Wait for connection before announcing
 	if _mqtt.get_connection_state() == MQTTBridge.State.CONNECTED:
 		_announce()
 	_mqtt.connected.connect(_on_mqtt_connected)
 	_mqtt.message_received.connect(_on_mqtt_message)
+
+
+## Configure the broker-published Last Will and Testament for this peer.
+##
+## LWT is a standard MQTT v3.1.1 mechanism (§3.1.2.5): the broker publishes
+## the will payload to <component>/status if this client disconnects
+## ungracefully. OCP convention sets timestamp=0 in LWT payloads so observers
+## can distinguish a broker-published LWT from a peer-published graceful
+## "offline" — every other OCP peer (S.T.A.T., M.I.R.A.G.E., simulation
+## framework) follows this same convention.
+func _set_lwt() -> void:
+	if _mqtt == null:
+		return
+	var will_msg := OCPMessage.build_status(
+		peer_id, "offline", version, capabilities,
+		embodiment_type, simulated_capabilities, real_capabilities
+	)
+	will_msg["timestamp"] = 0  # OCP LWT convention — distinguishes broker-published LWT from graceful offline
+	_mqtt.set_will(
+		OCPMessage.status_topic(component_name),
+		OCPMessage.serialize(will_msg),
+		true  # Retain — last-known-state for new subscribers
+	)
 
 
 func _process(delta: float) -> void:
@@ -85,7 +112,7 @@ func inhabit(operator_session: String, mode: String = "full_control") -> void:
 	inhabited_by = operator_session
 	if _mqtt:
 		var event := OCPMessage.build_inhabit_event(peer_id, operator_session, mode)
-		_mqtt.publish("oasis/%s" % peer_id, OCPMessage.serialize(event))
+		_mqtt.publish(OCPMessage.events_topic(peer_id), OCPMessage.serialize(event))
 
 
 ## Clear the inhabited_by field and publish a release event.
@@ -93,7 +120,7 @@ func release() -> void:
 	inhabited_by = ""
 	if _mqtt:
 		var event := OCPMessage.build_release_event(peer_id)
-		_mqtt.publish("oasis/%s" % peer_id, OCPMessage.serialize(event))
+		_mqtt.publish(OCPMessage.events_topic(peer_id), OCPMessage.serialize(event))
 
 
 # --- Internal ---
@@ -123,11 +150,11 @@ func _on_mqtt_connected() -> void:
 
 
 func _announce() -> void:
-	# Subscribe to this peer's command topic
-	_mqtt.subscribe(OCPMessage.topic_for(component_name, "command"))
-	_mqtt.subscribe("oasis/%s" % peer_id)
+	# v1.4 topic conventions: <component>/cmd, <peer_id>/events, +/status
+	_mqtt.subscribe(OCPMessage.cmd_topic(component_name))
+	_mqtt.subscribe(OCPMessage.events_topic(peer_id))
 	# Subscribe to all status for peer awareness
-	_mqtt.subscribe("oasis/+/status")
+	_mqtt.subscribe("+/status")
 	# Publish initial status
 	_publish_status("online")
 	# Publish discovery if simulating another peer
