@@ -183,6 +183,5 @@ branch naming conventions, and code review process.
 
 ## License
 
-GPL-3.0. This project is part of the O.A.S.I.S. ecosystem; all O.A.S.I.S.
-component repositories use the GNU General Public License v3.0.
+GPL-3.0, the same license as the O.A.S.I.S. component repositories.
 See [LICENSE](LICENSE).
