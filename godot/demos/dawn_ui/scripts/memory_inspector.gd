@@ -47,7 +47,7 @@ const MOCK_SEEDS := {
 	],
 	"summaries": [
 		{"title": "Morning briefing 2026-05-07",
-		 "body": "Reviewed M.I.R.A.G.E. parity audit, queued the WSL2 + USB/IP container plan, and shipped Phase 3 of the Godot D.A.W.N. recreation."},
+		 "body": "Reviewed overnight sensor logs, confirmed the diagnostics schedule, and flagged two open items for the afternoon."},
 		{"title": "Conversation with Pepper 2026-05-06",
 		 "body": "Reminder to prep for the board review on Thursday; agenda placed in the calendar."},
 	],
