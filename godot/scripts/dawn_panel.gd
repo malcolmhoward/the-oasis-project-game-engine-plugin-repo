@@ -24,6 +24,13 @@ func _ready():
 	send_button.pressed.connect(_on_send)
 	input_field.text_submitted.connect(_on_send_text)
 
+	# Prevent scroll container from stealing focus from input field
+	var scroll = $VBoxContainer/ScrollContainer
+	if scroll:
+		scroll.focus_mode = Control.FOCUS_NONE
+	if conversation:
+		conversation.focus_mode = Control.FOCUS_NONE
+
 	var oasis_mqtt = get_node_or_null("/root/OasisMQTT")
 	if oasis_mqtt:
 		_mqtt = oasis_mqtt.get_mqtt()
@@ -31,6 +38,12 @@ func _ready():
 		oasis_mqtt.peer_discovered.connect(_on_peer_discovered)
 
 	_update_status()
+
+	# Keep editing mode after Enter — Godot 4.4+ exits editing by default
+	# (LineEdit keeps focus but stops accepting typed characters)
+	if input_field:
+		input_field.keep_editing_on_text_submit = true
+		input_field.grab_focus.call_deferred()
 
 
 func _on_send():
@@ -51,6 +64,7 @@ func _on_send_text(text: String):
 		}))
 	user_message_sent.emit(text)
 	input_field.clear()
+	input_field.grab_focus()
 
 
 func _on_mqtt_message(topic: String, payload: String):
@@ -86,14 +100,12 @@ const MAX_MESSAGES := 100
 
 
 func _add_message(sender: String, text: String, color: Color):
-	var label = RichTextLabel.new()
-	label.bbcode_enabled = true
-	label.fit_content = true
-	label.scroll_active = false
-	label.text = "[color=#%s]%s:[/color] %s" % [
-		color.to_html(false), sender, text
-	]
-	conversation.add_child(label)
+	var role = MessageBubble.Role.USER if sender == "You" else MessageBubble.Role.ASSISTANT
+	var bubble = MessageBubble.create(role, sender, text)
+	conversation.add_child(bubble)
+	# Typewriter effect for assistant responses
+	if role == MessageBubble.Role.ASSISTANT:
+		bubble.typewrite(50.0)  # 50 chars/sec
 	# Remove oldest messages to prevent memory growth
 	while conversation.get_child_count() > MAX_MESSAGES:
 		var oldest = conversation.get_child(0)
@@ -103,16 +115,21 @@ func _add_message(sender: String, text: String, color: Color):
 	await get_tree().process_frame
 	var scroll = $VBoxContainer/ScrollContainer
 	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+	# Re-grab focus after UI settles (wait 2 frames for layout + scroll)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if input_field and is_inside_tree():
+		input_field.grab_focus()
 
 
 func _update_status():
 	if status_label:
 		if _dawn_online:
-			status_label.text = "D.A.W.N.: Online"
-			status_label.add_theme_color_override("font_color", Color("#00CC66"))
+			status_label.text = "● D.A.W.N.: Online"
+			status_label.add_theme_color_override("font_color", ArcReactorDark.STATUS_SUCCESS)
 		elif _mqtt:
-			status_label.text = "D.A.W.N.: Waiting..."
-			status_label.add_theme_color_override("font_color", Color("#CCAA00"))
+			status_label.text = "● D.A.W.N.: Waiting..."
+			status_label.add_theme_color_override("font_color", ArcReactorDark.STATUS_WARNING)
 		else:
 			status_label.text = "MQTT: Not connected"
-			status_label.add_theme_color_override("font_color", Color("#CC3333"))
+			status_label.add_theme_color_override("font_color", ArcReactorDark.STATUS_ERROR)
